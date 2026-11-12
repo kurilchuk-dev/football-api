@@ -1,4 +1,4 @@
 {
-  "*.py": ["python -m ruff check --fix", "python -m ruff format"],
+  "*.py": ["python -m ruff check --fix --force-exclude", "python -m ruff format --force-exclude"],
   "*.{json,md,yml,yaml}": ["prettier --write"]
 }
