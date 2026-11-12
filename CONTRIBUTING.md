@@ -46,10 +46,10 @@ Examples: `feat/match-list`, `fix/header-overflow`, `chore/update-deps`.
 
 ```bash
 npm install                          # installs husky and the git hooks
-pip install -r requirements-dev.txt  # ruff (preferably inside an activated .venv)
+pip install -r requirements.txt -r requirements-dev.txt  # ruff, pytest (inside .venv)
 ```
 
-The hooks call `python -m ruff`, so the environment with ruff must be active when you commit.
+The hooks and npm scripts run Python through `scripts/py.js`, which uses `.venv` (or `venv`) automatically, so you do not need to activate it.
 
 ## Scripts
 

@@ -1,2 +1,3 @@
 node scripts/check-branch-name.js
 npm run lint
+node scripts/py.js -m pytest
