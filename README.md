@@ -32,11 +32,11 @@ Docs: http://localhost:8000/api/docs/
 
 ## Environment variables
 
-| Variable | Description |
-|---|---|
-| `SECRET_KEY` | Django secret key |
-| `DEBUG` | `True` for local development |
-| `DATABASE_URL` | Database connection string |
+| Variable               | Description                                |
+| ---------------------- | ------------------------------------------ |
+| `SECRET_KEY`           | Django secret key                          |
+| `DEBUG`                | `True` for local development               |
+| `DATABASE_URL`         | Database connection string                 |
 | `CORS_ALLOWED_ORIGINS` | Frontend URL, e.g. `http://localhost:5173` |
 
 ## Tests
@@ -47,9 +47,7 @@ pytest
 
 ## Workflow
 
-- `main` is always stable; work happens in feature branches (`feature/news-list`).
-- Every change goes through a Pull Request.
-- Commit style: `feat: add news endpoint`, `fix: table points calculation`.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branches, commits, pull requests and git hooks.
 
 ## Roadmap
 
