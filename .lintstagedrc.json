@@ -1,0 +1,4 @@
+{
+  "*.py": ["python -m ruff check --fix", "python -m ruff format"],
+  "*.{json,md,yml,yaml}": ["prettier --write"]
+}
