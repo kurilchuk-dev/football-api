@@ -8,3 +8,8 @@ select = ["E", "F", "W", "I", "B", "UP", "DJ"]
 
 [tool.ruff.format]
 quote-style = "double"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Uncomment when the Django project exists:
+# DJANGO_SETTINGS_MODULE = "config.settings"
