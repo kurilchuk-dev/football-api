@@ -1,0 +1,20 @@
+from rest_framework import serializers
+
+
+class StandingTeamSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    is_our_team = serializers.BooleanField()
+
+
+class StandingRowSerializer(serializers.Serializer):
+    position = serializers.IntegerField()
+    team = StandingTeamSerializer()
+    played = serializers.IntegerField()
+    won = serializers.IntegerField()
+    drawn = serializers.IntegerField()
+    lost = serializers.IntegerField()
+    goals_for = serializers.IntegerField()
+    goals_against = serializers.IntegerField()
+    goal_difference = serializers.IntegerField()
+    points = serializers.IntegerField()
