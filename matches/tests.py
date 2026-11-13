@@ -53,3 +53,19 @@ class MatchApiTests(APITestCase):
     def test_api_is_read_only(self):
         response = self.client.post("/api/matches/", {})
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_upcoming_returns_only_matches_without_score(self):
+        response = self.client.get("/api/matches/upcoming/")
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["id"], self.new.id)
+
+    def test_results_returns_only_finished_matches(self):
+        response = self.client.get("/api/matches/results/")
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["id"], self.old.id)
+
+    def test_filter_by_team(self):
+        other = Team.objects.create(name="Northgate")
+        Match.objects.create(home_team=other, away_team=self.away, played_at=timezone.now())
+        response = self.client.get(f"/api/matches/?team={self.home.id}")
+        self.assertEqual(len(response.data), 2)
