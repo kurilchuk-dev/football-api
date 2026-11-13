@@ -1,0 +1,424 @@
+openapi: 3.0.3
+info:
+  title: Football API
+  version: 1.0.0
+  description: 'API for the football team website: teams, matches, standings and players.'
+paths:
+  /api/matches/:
+    get:
+      operationId: matches_list
+      parameters:
+        - in: query
+          name: team
+          schema:
+            type: integer
+          description: Show only matches of the team with this id
+      tags:
+        - matches
+      security:
+        - cookieAuth: []
+        - basicAuth: []
+        - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Match'
+          description: ''
+  /api/matches/{id}/:
+    get:
+      operationId: matches_retrieve
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this match.
+          required: true
+      tags:
+        - matches
+      security:
+        - cookieAuth: []
+        - basicAuth: []
+        - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Match'
+          description: ''
+  /api/matches/results/:
+    get:
+      operationId: matches_results_list
+      parameters:
+        - in: query
+          name: team
+          schema:
+            type: integer
+          description: Show only matches of the team with this id
+      tags:
+        - matches
+      security:
+        - cookieAuth: []
+        - basicAuth: []
+        - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Match'
+          description: ''
+  /api/matches/upcoming/:
+    get:
+      operationId: matches_upcoming_list
+      parameters:
+        - in: query
+          name: team
+          schema:
+            type: integer
+          description: Show only matches of the team with this id
+      tags:
+        - matches
+      security:
+        - cookieAuth: []
+        - basicAuth: []
+        - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Match'
+          description: ''
+  /api/players/:
+    get:
+      operationId: players_list
+      tags:
+        - players
+      security:
+        - cookieAuth: []
+        - basicAuth: []
+        - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Player'
+          description: ''
+  /api/players/{id}/:
+    get:
+      operationId: players_retrieve
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this player.
+          required: true
+      tags:
+        - players
+      security:
+        - cookieAuth: []
+        - basicAuth: []
+        - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Player'
+          description: ''
+  /api/staff/:
+    get:
+      operationId: staff_list
+      tags:
+        - staff
+      security:
+        - cookieAuth: []
+        - basicAuth: []
+        - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StaffMember'
+          description: ''
+  /api/staff/{id}/:
+    get:
+      operationId: staff_retrieve
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this staff member.
+          required: true
+      tags:
+        - staff
+      security:
+        - cookieAuth: []
+        - basicAuth: []
+        - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffMember'
+          description: ''
+  /api/standings/:
+    get:
+      operationId: standings_list
+      tags:
+        - standings
+      security:
+        - cookieAuth: []
+        - basicAuth: []
+        - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StandingRow'
+          description: ''
+  /api/teams/:
+    get:
+      operationId: teams_list
+      tags:
+        - teams
+      security:
+        - cookieAuth: []
+        - basicAuth: []
+        - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Team'
+          description: ''
+  /api/teams/{id}/:
+    get:
+      operationId: teams_retrieve
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: A unique integer value identifying this team.
+          required: true
+      tags:
+        - teams
+      security:
+        - cookieAuth: []
+        - basicAuth: []
+        - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+          description: ''
+components:
+  schemas:
+    Match:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        home_team:
+          allOf:
+            - $ref: '#/components/schemas/Team'
+          readOnly: true
+        away_team:
+          allOf:
+            - $ref: '#/components/schemas/Team'
+          readOnly: true
+        home_score:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        away_score:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        played_at:
+          type: string
+          format: date-time
+      required:
+        - away_team
+        - home_team
+        - id
+        - played_at
+    Player:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        first_name:
+          type: string
+          maxLength: 50
+        last_name:
+          type: string
+          maxLength: 50
+        number:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        position:
+          $ref: '#/components/schemas/PositionEnum'
+        position_display:
+          type: string
+          readOnly: true
+      required:
+        - first_name
+        - id
+        - last_name
+        - number
+        - position
+        - position_display
+    PositionEnum:
+      enum:
+        - GK
+        - DF
+        - MF
+        - FW
+      type: string
+      description: |-
+        * `GK` - Goalkeeper
+        * `DF` - Defender
+        * `MF` - Midfielder
+        * `FW` - Forward
+    RoleEnum:
+      enum:
+        - head_coach
+        - assistant
+        - manager
+      type: string
+      description: |-
+        * `head_coach` - Head coach
+        * `assistant` - Assistant coach
+        * `manager` - Team manager
+    StaffMember:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        first_name:
+          type: string
+          maxLength: 50
+        last_name:
+          type: string
+          maxLength: 50
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        role_display:
+          type: string
+          readOnly: true
+      required:
+        - first_name
+        - id
+        - last_name
+        - role
+        - role_display
+    StandingRow:
+      type: object
+      properties:
+        position:
+          type: integer
+        team:
+          $ref: '#/components/schemas/StandingTeam'
+        played:
+          type: integer
+        won:
+          type: integer
+        drawn:
+          type: integer
+        lost:
+          type: integer
+        goals_for:
+          type: integer
+        goals_against:
+          type: integer
+        goal_difference:
+          type: integer
+        points:
+          type: integer
+      required:
+        - drawn
+        - goal_difference
+        - goals_against
+        - goals_for
+        - lost
+        - played
+        - points
+        - position
+        - team
+        - won
+    StandingTeam:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        is_our_team:
+          type: boolean
+      required:
+        - id
+        - is_our_team
+        - name
+    Team:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        city:
+          type: string
+          maxLength: 100
+        is_our_team:
+          type: boolean
+      required:
+        - id
+        - name
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid

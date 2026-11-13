@@ -23,10 +23,23 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "corsheaders",
+    "drf_spectacular",
     "teams",
+    "standings",
     "matches",
     "players",
 ]
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Football API",
+    "DESCRIPTION": "API for the football team website: teams, matches, standings and players.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
