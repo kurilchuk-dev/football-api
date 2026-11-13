@@ -24,7 +24,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "drf_spectacular",
-    "standingsteams",
+    "teams",
+    "standings",
     "matches",
     "players",
 ]
