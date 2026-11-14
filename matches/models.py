@@ -12,6 +12,9 @@ class Match(models.Model):
     home_score = models.PositiveSmallIntegerField(null=True, blank=True)
     away_score = models.PositiveSmallIntegerField(null=True, blank=True)
     played_at = models.DateTimeField()
+    round = models.PositiveSmallIntegerField(
+        null=True, blank=True, help_text="Round (matchday) number, e.g. 5 for round 5."
+    )
 
     class Meta:
         ordering = ["-played_at"]

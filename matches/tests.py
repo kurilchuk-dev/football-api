@@ -69,3 +69,11 @@ class MatchApiTests(APITestCase):
         Match.objects.create(home_team=other, away_team=self.away, played_at=timezone.now())
         response = self.client.get(f"/api/matches/?team={self.home.id}")
         self.assertEqual(len(response.data), 2)
+
+    def test_round_is_exposed_and_optional(self):
+        self.old.round = 5
+        self.old.save()
+        response = self.client.get(f"/api/matches/{self.old.id}/")
+        self.assertEqual(response.data["round"], 5)
+        response = self.client.get(f"/api/matches/{self.new.id}/")
+        self.assertIsNone(response.data["round"])

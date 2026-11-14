@@ -18,4 +18,5 @@ class MatchSerializer(serializers.ModelSerializer):
             "home_score",
             "away_score",
             "played_at",
+            "round",
         ]
