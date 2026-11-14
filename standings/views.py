@@ -9,4 +9,7 @@ from .services import calculate_standings
 class StandingsView(APIView):
     @extend_schema(responses=StandingRowSerializer(many=True))
     def get(self, request):
-        return Response(calculate_standings())
+        serializer = StandingRowSerializer(
+            calculate_standings(), many=True, context={"request": request}
+        )
+        return Response(serializer.data)

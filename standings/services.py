@@ -34,7 +34,12 @@ def _head_to_head(matches, table):
 def calculate_standings():
     rows = {
         team.id: {
-            "team": {"id": team.id, "name": team.name, "is_our_team": team.is_our_team},
+            "team": {
+                "id": team.id,
+                "name": team.name,
+                "is_our_team": team.is_our_team,
+                "logo": team.logo,
+            },
             "played": 0,
             "won": 0,
             "drawn": 0,
