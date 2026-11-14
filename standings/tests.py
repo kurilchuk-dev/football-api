@@ -107,3 +107,31 @@ class StandingsServiceTests(APITestCase):
         table = calculate_standings()
         self.assertEqual(self.row(table, self.a)["form"], ["W"])
         self.assertEqual(self.row(table, self.c)["form"], [])
+
+
+class StandingsApiLogoTests(APITestCase):
+    def test_logo_is_null_without_upload_and_url_with_upload(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        plain = Team.objects.create(name="Plain")
+        with_logo = Team.objects.create(name="Logo")
+        # Minimal valid 1x1 PNG.
+        png = (
+            b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00"
+            b"\x1f\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xa7\x9a\xa0\xa0"
+            b"\x00\x00\x00\x00IEND\xaeB`\x82"
+        )
+        with self.settings(MEDIA_ROOT=self._tmp()):
+            with_logo.logo.save("logo.png", SimpleUploadedFile("logo.png", png), save=True)
+            response = self.client.get("/api/standings/")
+        self.assertEqual(response.status_code, 200)
+        by_name = {r["team"]["name"]: r["team"] for r in response.json()}
+        self.assertIsNone(by_name[plain.name]["logo"])
+        self.assertTrue(by_name["Logo"]["logo"].startswith("http://testserver/media/team_logos/"))
+
+    def _tmp(self):
+        import tempfile
+
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        return d.name

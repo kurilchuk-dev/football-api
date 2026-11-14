@@ -409,9 +409,15 @@ components:
           type: string
         is_our_team:
           type: boolean
+        logo:
+          type: string
+          format: uri
+          nullable: true
+          readOnly: true
       required:
         - id
         - is_our_team
+        - logo
         - name
     Team:
       type: object
@@ -427,6 +433,10 @@ components:
           maxLength: 100
         is_our_team:
           type: boolean
+        logo:
+          type: string
+          format: uri
+          nullable: true
       required:
         - id
         - name
