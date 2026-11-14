@@ -18,3 +18,7 @@ class StandingRowSerializer(serializers.Serializer):
     goals_against = serializers.IntegerField()
     goal_difference = serializers.IntegerField()
     points = serializers.IntegerField()
+    form = serializers.ListField(
+        child=serializers.ChoiceField(choices=["W", "D", "L"]),
+        help_text="Results of the last 5 matches, oldest first (W/D/L).",
+    )

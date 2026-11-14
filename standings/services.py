@@ -1,6 +1,8 @@
 from matches.models import Match
 from teams.models import Team
 
+FORM_LENGTH = 5
+
 
 def _head_to_head(matches, table):
     """Return {team_id: (points, goal_diff, goals_for)} counting only matches
@@ -39,11 +41,14 @@ def calculate_standings():
             "lost": 0,
             "goals_for": 0,
             "goals_against": 0,
+            "form": [],
         }
         for team in Team.objects.all()
     }
 
-    finished = Match.objects.filter(home_score__isnull=False, away_score__isnull=False)
+    finished = Match.objects.filter(home_score__isnull=False, away_score__isnull=False).order_by(
+        "-played_at", "-id"
+    )
     for match in finished:
         home = rows[match.home_team_id]
         away = rows[match.away_team_id]
@@ -58,15 +63,25 @@ def calculate_standings():
         if match.home_score > match.away_score:
             home["won"] += 1
             away["lost"] += 1
+            home_result, away_result = "W", "L"
         elif match.home_score < match.away_score:
             away["won"] += 1
             home["lost"] += 1
+            home_result, away_result = "L", "W"
         else:
             home["drawn"] += 1
             away["drawn"] += 1
+            home_result = away_result = "D"
+
+        # Matches arrive newest first, so the first FORM_LENGTH are the latest.
+        if len(home["form"]) < FORM_LENGTH:
+            home["form"].append(home_result)
+        if len(away["form"]) < FORM_LENGTH:
+            away["form"].append(away_result)
 
     table = list(rows.values())
     for row in table:
+        row["form"].reverse()  # oldest -> newest, so the latest match is last
         row["goal_difference"] = row["goals_for"] - row["goals_against"]
         row["points"] = row["won"] * 3 + row["drawn"]
 

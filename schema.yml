@@ -242,6 +242,16 @@ paths:
           description: ''
 components:
   schemas:
+    FormEnum:
+      enum:
+        - W
+        - D
+        - L
+      type: string
+      description: |-
+        * `W` - W
+        * `D` - D
+        * `L` - L
     Match:
       type: object
       properties:
@@ -373,8 +383,14 @@ components:
           type: integer
         points:
           type: integer
+        form:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormEnum'
+          description: Results of the last 5 matches, oldest first (W/D/L).
       required:
         - drawn
+        - form
         - goal_difference
         - goals_against
         - goals_for

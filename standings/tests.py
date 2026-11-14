@@ -83,3 +83,27 @@ class StandingsServiceTests(APITestCase):
         # Alpha 4 pts (GD +1), Bravo 4 pts (GD +4)
         table = calculate_standings()
         self.assertEqual(table[0]["team"]["name"], "Bravo")
+
+    def play_at(self, home, away, home_score, away_score, days_ago):
+        return Match.objects.create(
+            home_team=home,
+            away_team=away,
+            home_score=home_score,
+            away_score=away_score,
+            played_at=self.now - timedelta(days=days_ago),
+        )
+
+    def test_form_is_last_five_results_oldest_first(self):
+        # Alpha: oldest L, then W, D, W, W, W (6 matches) -> last five W D W W W... check order
+        results = [(0, 1), (1, 0), (1, 1), (2, 0), (3, 0), (0, 2)]  # (alpha, bravo) goals
+        for i, (alpha, bravo) in enumerate(results):
+            self.play_at(self.a, self.b, alpha, bravo, days_ago=len(results) - i)
+        form = self.row(calculate_standings(), self.a)["form"]
+        self.assertEqual(form, ["W", "D", "W", "W", "L"])
+        self.assertEqual(self.row(calculate_standings(), self.b)["form"], ["L", "D", "L", "L", "W"])
+
+    def test_form_with_fewer_matches_and_none(self):
+        self.play(self.a, self.b, 2, 0)
+        table = calculate_standings()
+        self.assertEqual(self.row(table, self.a)["form"], ["W"])
+        self.assertEqual(self.row(table, self.c)["form"], [])
