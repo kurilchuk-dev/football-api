@@ -281,6 +281,13 @@ components:
         played_at:
           type: string
           format: date-time
+        round:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          description: Round (matchday) number, e.g. 5 for round 5.
       required:
         - away_team
         - home_team
