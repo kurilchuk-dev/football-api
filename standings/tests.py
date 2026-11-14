@@ -63,3 +63,23 @@ class StandingsServiceTests(APITestCase):
 
     def test_sorted_by_points_then_goal_difference(self):
         self.play(self.a, self.c, 1, 0)  # Alpha 3 pts, GD +1
+
+    def test_head_to_head_beats_goal_difference(self):
+        # Alpha and Bravo both end on 3 points. Bravo has the better overall
+        # goal difference (+4 vs +1), but Alpha won the mutual match.
+        self.play(self.a, self.b, 1, 0)
+        self.play(self.b, self.c, 5, 0)
+        table = calculate_standings()
+        self.assertEqual([r["team"]["name"] for r in table][:2], ["Alpha", "Bravo"])
+        self.assertGreater(
+            self.row(table, self.b)["goal_difference"], self.row(table, self.a)["goal_difference"]
+        )
+
+    def test_head_to_head_draw_falls_back_to_goal_difference(self):
+        # Mutual match is a draw, so overall goal difference decides.
+        self.play(self.a, self.b, 1, 1)
+        self.play(self.b, self.c, 4, 0)
+        self.play(self.a, self.c, 1, 0)
+        # Alpha 4 pts (GD +1), Bravo 4 pts (GD +4)
+        table = calculate_standings()
+        self.assertEqual(table[0]["team"]["name"], "Bravo")
