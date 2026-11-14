@@ -2,6 +2,33 @@ from matches.models import Match
 from teams.models import Team
 
 
+def _head_to_head(matches, table):
+    """Return {team_id: (points, goal_diff, goals_for)} counting only matches
+    between teams that are tied on points with each other."""
+    groups = {}
+    for row in table:
+        groups.setdefault(row["points"], set()).add(row["team"]["id"])
+
+    stats = {row["team"]["id"]: [0, 0, 0] for row in table}
+    for match in matches:
+        home_id, away_id = match.home_team_id, match.away_team_id
+        if not any(home_id in g and away_id in g for g in groups.values()):
+            continue
+        hs, as_ = match.home_score, match.away_score
+        stats[home_id][1] += hs - as_
+        stats[home_id][2] += hs
+        stats[away_id][1] += as_ - hs
+        stats[away_id][2] += as_
+        if hs > as_:
+            stats[home_id][0] += 3
+        elif hs < as_:
+            stats[away_id][0] += 3
+        else:
+            stats[home_id][0] += 1
+            stats[away_id][0] += 1
+    return {team_id: tuple(values) for team_id, values in stats.items()}
+
+
 def calculate_standings():
     rows = {
         team.id: {
@@ -43,8 +70,18 @@ def calculate_standings():
         row["goal_difference"] = row["goals_for"] - row["goals_against"]
         row["points"] = row["won"] * 3 + row["drawn"]
 
+    # Teams level on points are ranked first by a mini-table of the matches
+    # played between them (points, goal difference, goals scored), then by
+    # overall goal difference, overall goals scored and finally by name.
+    h2h = _head_to_head(finished, table)
     table.sort(
-        key=lambda r: (-r["points"], -r["goal_difference"], -r["goals_for"], r["team"]["name"])
+        key=lambda r: (
+            -r["points"],
+            *(-v for v in h2h[r["team"]["id"]]),
+            -r["goal_difference"],
+            -r["goals_for"],
+            r["team"]["name"],
+        )
     )
     for position, row in enumerate(table, start=1):
         row["position"] = position
