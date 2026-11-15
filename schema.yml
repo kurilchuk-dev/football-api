@@ -318,6 +318,11 @@ components:
           format: int64
           nullable: true
           description: Shirt number; leave empty if not assigned yet.
+        photo:
+          type: string
+          format: uri
+          nullable: true
+          description: Portrait shown on the team page.
       required:
         - first_name
         - id
