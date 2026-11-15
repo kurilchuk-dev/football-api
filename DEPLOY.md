@@ -4,7 +4,7 @@
 
 ```
 GitHub (main) ─┬─► Cloudflare Pages ── сайт (football-web)
-               └─► Render ──────────── API  (football-api)
+               └─► Render ──────────── API  (football-api-eu, Frankfurt)
                       ├─► Neon        — Postgres
                       └─► Cloudinary  — логотипи й фото гравців
 ```
