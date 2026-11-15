@@ -11,13 +11,16 @@ class Match(models.Model):
     )
     home_score = models.PositiveSmallIntegerField(null=True, blank=True)
     away_score = models.PositiveSmallIntegerField(null=True, blank=True)
-    played_at = models.DateTimeField()
+    played_at = models.DateTimeField(
+        null=True, blank=True, help_text="Leave empty if the date is not known yet."
+    )
     round = models.PositiveSmallIntegerField(
         null=True, blank=True, help_text="Round (matchday) number, e.g. 5 for round 5."
     )
 
     class Meta:
-        ordering = ["-played_at"]
+        # Matches without a date go last, on every database.
+        ordering = [F("played_at").desc(nulls_last=True), "-id"]
         constraints = [
             models.CheckConstraint(
                 condition=~Q(home_team=F("away_team")),
