@@ -1,6 +1,7 @@
 from unittest import mock
 
 from django.test import TestCase
+from rest_framework.test import APITestCase
 
 
 class HealthTests(TestCase):
@@ -13,3 +14,21 @@ class HealthTests(TestCase):
         with mock.patch("config.views.connection.ensure_connection", side_effect=Exception):
             response = self.client.get("/health/")
         self.assertEqual(response.status_code, 503)
+
+
+class ApiCacheHeaderTests(APITestCase):
+    def test_public_api_can_be_cached_by_a_cdn(self):
+        response = self.client.get("/api/matches/")
+        cache_control = response["Cache-Control"]
+        self.assertIn("public", cache_control)
+        self.assertIn("s-maxage=60", cache_control)
+        self.assertIn("max-age=0", cache_control)
+
+    def test_api_answers_any_origin_the_same_way(self):
+        response = self.client.get("/api/matches/", HTTP_ORIGIN="https://anything.example")
+        self.assertEqual(response["Access-Control-Allow-Origin"], "*")
+        self.assertNotIn("Origin", response.get("Vary", ""))
+
+    def test_health_and_admin_are_not_cached(self):
+        self.assertNotIn("s-maxage", self.client.get("/health/").get("Cache-Control", ""))
+        self.assertNotIn("s-maxage", self.client.get("/admin/login/").get("Cache-Control", ""))
