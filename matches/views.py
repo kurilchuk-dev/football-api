@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import F, Q
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -30,7 +30,11 @@ class MatchViewSet(viewsets.ReadOnlyModelViewSet):
     @extend_schema(parameters=[TEAM_PARAMETER], responses=MatchSerializer(many=True))
     @action(detail=False, methods=["get"])
     def upcoming(self, request):
-        queryset = self.get_queryset().filter(home_score__isnull=True).order_by("played_at")
+        queryset = (
+            self.get_queryset()
+            .filter(home_score__isnull=True)
+            .order_by(F("played_at").asc(nulls_last=True), "id")
+        )
         return Response(self.get_serializer(queryset, many=True).data)
 
     @extend_schema(parameters=[TEAM_PARAMETER], responses=MatchSerializer(many=True))

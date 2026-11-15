@@ -70,6 +70,17 @@ class MatchApiTests(APITestCase):
         response = self.client.get(f"/api/matches/?team={self.home.id}")
         self.assertEqual(len(response.data), 2)
 
+    def test_date_is_optional_and_undated_matches_go_last(self):
+        undated = Match.objects.create(home_team=self.home, away_team=self.away, played_at=None)
+        response = self.client.get(f"/api/matches/{undated.id}/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data["played_at"])
+
+        # The list and the upcoming list put the match without a date after dated ones.
+        self.assertEqual(self.client.get("/api/matches/").data[-1]["id"], undated.id)
+        upcoming = self.client.get("/api/matches/upcoming/").data
+        self.assertEqual([m["id"] for m in upcoming], [self.new.id, undated.id])
+
     def test_round_is_exposed_and_optional(self):
         self.old.round = 5
         self.old.save()
