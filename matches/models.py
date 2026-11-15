@@ -8,27 +8,33 @@ from django.utils import timezone
 
 class Match(models.Model):
     home_team = models.ForeignKey(
-        "teams.Team", on_delete=models.PROTECT, related_name="home_matches"
+        "teams.Team",
+        on_delete=models.PROTECT,
+        related_name="home_matches",
+        verbose_name="господарі",
     )
     away_team = models.ForeignKey(
-        "teams.Team", on_delete=models.PROTECT, related_name="away_matches"
+        "teams.Team", on_delete=models.PROTECT, related_name="away_matches", verbose_name="гості"
     )
-    home_score = models.PositiveSmallIntegerField(null=True, blank=True)
-    away_score = models.PositiveSmallIntegerField(null=True, blank=True)
+    home_score = models.PositiveSmallIntegerField("голи господарів", null=True, blank=True)
+    away_score = models.PositiveSmallIntegerField("голи гостей", null=True, blank=True)
     match_date = models.DateField(
-        null=True, blank=True, help_text="Leave empty if the date is not known yet."
+        "дата", null=True, blank=True, help_text="Залиште порожнім, якщо дата ще невідома."
     )
     match_time = models.TimeField(
+        "час",
         null=True,
         blank=True,
-        help_text="Kick-off time (Kyiv). Leave empty if only the date is known so far.",
+        help_text="Початок матчу (за Києвом). Залиште порожнім, якщо відома лише дата.",
     )
     round = models.PositiveSmallIntegerField(
-        null=True, blank=True, help_text="Round (matchday) number, e.g. 5 for round 5."
+        "тур", null=True, blank=True, help_text="Номер туру, наприклад 5."
     )
 
     class Meta:
         # Newest first; matches without a date (or time) go last, on every database.
+        verbose_name = "матч"
+        verbose_name_plural = "матчі"
         ordering = [
             F("match_date").desc(nulls_last=True),
             F("match_time").desc(nulls_last=True),
@@ -49,9 +55,24 @@ class Match(models.Model):
         return f"{self.home_team} vs {self.away_team}"
 
     def clean(self):
+        # Plain (non-field) errors: this runs in forms that only show some of the fields
+        # (the round page, the editable list), where a per-field error would not fit.
         super().clean()
+        problems = []
+        if self.home_team_id and self.home_team_id == self.away_team_id:
+            problems.append("Команда не може грати сама з собою.")
         if self.match_time is not None and self.match_date is None:
-            raise ValidationError({"match_date": "Set the date too, or clear the time."})
+            problems.append("Вкажіть і дату, або очистіть час.")
+        if (self.home_score is None) != (self.away_score is None):
+            problems.append("Вкажіть рахунок обох команд або залиште обидва поля порожніми.")
+        if self.round is not None and self.home_team_id and self.away_team_id:
+            same_round = Match.objects.filter(round=self.round).exclude(pk=self.pk)
+            for team_id in {self.home_team_id, self.away_team_id}:
+                if same_round.filter(Q(home_team_id=team_id) | Q(away_team_id=team_id)).exists():
+                    team = self.home_team if team_id == self.home_team_id else self.away_team
+                    problems.append(f"{team} уже грає в турі {self.round}.")
+        if problems:
+            raise ValidationError(problems)
 
     @property
     def played_at(self):

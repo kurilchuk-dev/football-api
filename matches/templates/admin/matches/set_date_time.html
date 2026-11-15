@@ -1,0 +1,29 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<style>
+  .sdt input { padding:10px; border:1px solid rgba(128,128,128,.35); border-radius:8px; background:transparent; color:inherit }
+  .sdt-btn { padding:10px 18px; border:0; border-radius:8px; background:#dc2626; color:#fff; cursor:pointer }
+</style>
+<form method="post" class="sdt" style="max-width:560px">
+  {% csrf_token %}
+  <p>Буде змінено матчів: <strong>{{ matches.count }}</strong></p>
+  <ul style="opacity:.75;margin:0 0 18px;padding-left:18px">
+    {% for match in matches|slice:":8" %}<li>{{ match }}</li>{% endfor %}
+    {% if matches.count > 8 %}<li>… і ще {{ matches.count|add:"-8" }}</li>{% endif %}
+  </ul>
+  {% for field in form %}
+    <div style="margin-bottom:16px">
+      <label for="{{ field.id_for_label }}" style="display:block;font-weight:600;margin-bottom:6px">{{ field.label }}</label>
+      {{ field }}
+      <p style="opacity:.7;font-size:13px;margin:6px 0 0">{{ field.help_text }}</p>
+      {{ field.errors }}
+    </div>
+  {% endfor %}
+  <input type="hidden" name="action" value="{{ action }}">
+  <input type="hidden" name="apply" value="1">
+  {% for pk in selected %}<input type="hidden" name="_selected_action" value="{{ pk }}">{% endfor %}
+  <button type="submit" class="sdt-btn">Застосувати</button>
+  <a href="{% url 'admin:matches_match_changelist' %}" style="margin-left:14px">Скасувати</a>
+</form>
+{% endblock %}
