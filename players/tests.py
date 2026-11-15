@@ -34,6 +34,16 @@ class PlayersApiTests(APITestCase):
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["position_display"], "Goalkeeper")
 
+    def test_filter_by_team(self):
+        other = Team.objects.create(name="Other FC")
+        Player.objects.create(
+            team=other, first_name="E", last_name="Rival", number=1, position="GK"
+        )
+        response = self.client.get(f"/api/players/?team={self.team.id}")
+        self.assertEqual(len(response.data), 2)
+        response = self.client.get(f"/api/players/?team={other.id}")
+        self.assertEqual(len(response.data), 1)
+
     def test_shirt_number_is_unique_per_team(self):
         with self.assertRaises(IntegrityError):
             Player.objects.create(
