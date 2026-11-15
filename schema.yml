@@ -316,30 +316,17 @@ components:
           maximum: 9223372036854775807
           minimum: 0
           format: int64
-        position:
-          $ref: '#/components/schemas/PositionEnum'
-        position_display:
+          nullable: true
+          description: Shirt number; leave empty if not assigned yet.
+        photo:
           type: string
-          readOnly: true
+          format: uri
+          nullable: true
+          description: Portrait shown on the team page.
       required:
         - first_name
         - id
         - last_name
-        - number
-        - position
-        - position_display
-    PositionEnum:
-      enum:
-        - GK
-        - DF
-        - MF
-        - FW
-      type: string
-      description: |-
-        * `GK` - Goalkeeper
-        * `DF` - Defender
-        * `MF` - Midfielder
-        * `FW` - Forward
     RoleEnum:
       enum:
         - head_coach
