@@ -54,7 +54,7 @@ def calculate_standings():
     }
 
     finished = Match.objects.filter(home_score__isnull=False, away_score__isnull=False).order_by(
-        F("played_at").desc(nulls_last=True), "-id"
+        F("match_date").desc(nulls_last=True), F("match_time").desc(nulls_last=True), "-id"
     )
     for match in finished:
         home = rows[match.home_team_id]

@@ -1,5 +1,9 @@
+from datetime import datetime
+
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import F, Q
+from django.utils import timezone
 
 
 class Match(models.Model):
@@ -11,22 +15,47 @@ class Match(models.Model):
     )
     home_score = models.PositiveSmallIntegerField(null=True, blank=True)
     away_score = models.PositiveSmallIntegerField(null=True, blank=True)
-    played_at = models.DateTimeField(
+    match_date = models.DateField(
         null=True, blank=True, help_text="Leave empty if the date is not known yet."
+    )
+    match_time = models.TimeField(
+        null=True,
+        blank=True,
+        help_text="Kick-off time (Kyiv). Leave empty if only the date is known so far.",
     )
     round = models.PositiveSmallIntegerField(
         null=True, blank=True, help_text="Round (matchday) number, e.g. 5 for round 5."
     )
 
     class Meta:
-        # Matches without a date go last, on every database.
-        ordering = [F("played_at").desc(nulls_last=True), "-id"]
+        # Newest first; matches without a date (or time) go last, on every database.
+        ordering = [
+            F("match_date").desc(nulls_last=True),
+            F("match_time").desc(nulls_last=True),
+            "-id",
+        ]
         constraints = [
             models.CheckConstraint(
                 condition=~Q(home_team=F("away_team")),
                 name="home_and_away_teams_differ",
-            )
+            ),
+            models.CheckConstraint(
+                condition=Q(match_time__isnull=True) | Q(match_date__isnull=False),
+                name="time_needs_a_date",
+            ),
         ]
 
     def __str__(self):
         return f"{self.home_team} vs {self.away_team}"
+
+    def clean(self):
+        super().clean()
+        if self.match_time is not None and self.match_date is None:
+            raise ValidationError({"match_date": "Set the date too, or clear the time."})
+
+    @property
+    def played_at(self):
+        """Kick-off as an aware datetime (Kyiv time); None until both date and time are set."""
+        if self.match_date is None or self.match_time is None:
+            return None
+        return timezone.make_aware(datetime.combine(self.match_date, self.match_time))
