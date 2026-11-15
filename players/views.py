@@ -22,9 +22,6 @@ class PlayerViewSet(viewsets.ReadOnlyModelViewSet):
         team = self.request.query_params.get("team")
         if team and team.isdigit():
             queryset = queryset.filter(team_id=team)
-        position = self.request.query_params.get("position")
-        if position:
-            queryset = queryset.filter(position=position.upper())
         return queryset
 
 

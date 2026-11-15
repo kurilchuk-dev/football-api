@@ -5,8 +5,8 @@ from .models import Player, StaffMember
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ("number", "first_name", "last_name", "position", "team", "is_active")
-    list_filter = ("team", "position", "is_active")
+    list_display = ("last_name", "first_name", "number", "team", "is_active")
+    list_filter = ("team", "is_active")
     search_fields = ("first_name", "last_name")
 
 
