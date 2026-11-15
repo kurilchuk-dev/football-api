@@ -1,3 +1,5 @@
+from django.db.models import F
+
 from matches.models import Match
 from teams.models import Team
 
@@ -52,7 +54,7 @@ def calculate_standings():
     }
 
     finished = Match.objects.filter(home_score__isnull=False, away_score__isnull=False).order_by(
-        "-played_at", "-id"
+        F("played_at").desc(nulls_last=True), "-id"
     )
     for match in finished:
         home = rows[match.home_team_id]
