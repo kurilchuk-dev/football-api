@@ -31,4 +31,4 @@ class ApiCacheHeaderTests(APITestCase):
 
     def test_health_and_admin_are_not_cached(self):
         self.assertNotIn("s-maxage", self.client.get("/health/").get("Cache-Control", ""))
-        self.assertNotIn("s-maxage", self.client.get("/admin/login/").get("Cache-Control", ""))
+        self.assertNotIn("s-maxage", self.client.get("/admin/").get("Cache-Control", ""))
