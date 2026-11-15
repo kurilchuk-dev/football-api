@@ -55,9 +55,24 @@ class Match(models.Model):
         return f"{self.home_team} vs {self.away_team}"
 
     def clean(self):
+        # Plain (non-field) errors: this runs in forms that only show some of the fields
+        # (the round page, the editable list), where a per-field error would not fit.
         super().clean()
+        problems = []
+        if self.home_team_id and self.home_team_id == self.away_team_id:
+            problems.append("Команда не може грати сама з собою.")
         if self.match_time is not None and self.match_date is None:
-            raise ValidationError({"match_date": "Set the date too, or clear the time."})
+            problems.append("Вкажіть і дату, або очистіть час.")
+        if (self.home_score is None) != (self.away_score is None):
+            problems.append("Вкажіть рахунок обох команд або залиште обидва поля порожніми.")
+        if self.round is not None and self.home_team_id and self.away_team_id:
+            same_round = Match.objects.filter(round=self.round).exclude(pk=self.pk)
+            for team_id in {self.home_team_id, self.away_team_id}:
+                if same_round.filter(Q(home_team_id=team_id) | Q(away_team_id=team_id)).exists():
+                    team = self.home_team if team_id == self.home_team_id else self.away_team
+                    problems.append(f"{team} уже грає в турі {self.round}.")
+        if problems:
+            raise ValidationError(problems)
 
     @property
     def played_at(self):
