@@ -1,0 +1,21 @@
+{
+  "name": "football-api",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Node tooling only (git hooks, commitlint, prettier). The app itself is Python/Django.",
+  "scripts": {
+    "prepare": "husky",
+    "lint": "node scripts/py.js -m ruff check .",
+    "format": "node scripts/py.js -m ruff format . && prettier --write \"**/*.{json,md,yml,yaml}\"",
+    "format:check": "node scripts/py.js -m ruff format --check . && prettier --check \"**/*.{json,md,yml,yaml}\"",
+    "check": "npm run lint && npm run format:check"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.10.1"
+  },
+  "type": "module"
+}
