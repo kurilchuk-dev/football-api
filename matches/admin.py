@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django import forms
 from django.contrib import admin, messages
 from django.db.models import Count, F, Q
@@ -65,6 +67,21 @@ class WhenFilter(admin.SimpleListFilter):
         return queryset
 
 
+class SetDateTimeForm(forms.Form):
+    match_date = forms.DateField(
+        label="Дата",
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+        help_text="Залиште порожнім, щоб не змінювати дату.",
+    )
+    match_time = forms.TimeField(
+        label="Час",
+        required=False,
+        widget=forms.TimeInput(attrs={"type": "time"}),
+        help_text="Залиште порожнім, щоб не змінювати час.",
+    )
+
+
 ROUND_FIELDS = ("match_date", "match_time", "home_score", "away_score")
 RoundFormSet = modelformset_factory(
     Match,
@@ -99,6 +116,7 @@ class MatchAdmin(ModelAdmin):
         ("match_date", "match_time"),
         ("home_score", "away_score"),
     )
+    actions = ["shift_forward", "shift_back", "clear_date_time", "set_date_time"]
     actions_list = ["rounds_link"]
 
     # list columns
@@ -122,6 +140,74 @@ class MatchAdmin(ModelAdmin):
     @action(description="Внести результати по турах", icon="edit_calendar", url_path="rounds-link")
     def rounds_link(self, request):
         return redirect(reverse("admin:matches_match_rounds"))
+
+    # actions on the selected matches
+
+    @admin.action(description="Перенести на день вперед")
+    def shift_forward(self, request, queryset):
+        self._shift(request, queryset, 1)
+
+    @admin.action(description="Перенести на день назад")
+    def shift_back(self, request, queryset):
+        self._shift(request, queryset, -1)
+
+    def _shift(self, request, queryset, days):
+        changed = 0
+        for match in queryset.exclude(match_date__isnull=True):
+            match.match_date += timedelta(days=days)
+            match.save(update_fields=["match_date"])
+            changed += 1
+        skipped = queryset.count() - changed
+        self.message_user(request, f"Перенесено матчів: {changed}.", messages.SUCCESS)
+        if skipped:
+            self.message_user(request, f"Без дати, тому пропущено: {skipped}.", messages.WARNING)
+
+    @admin.action(description="Очистити дату й час")
+    def clear_date_time(self, request, queryset):
+        count = queryset.update(match_date=None, match_time=None)
+        self.message_user(request, f"Дату й час очищено: {count}.", messages.SUCCESS)
+
+    @admin.action(description="Встановити дату й час…")
+    def set_date_time(self, request, queryset):
+        if "apply" in request.POST:
+            form = SetDateTimeForm(request.POST)
+            if form.is_valid():
+                changes = {}
+                if form.cleaned_data["match_date"]:
+                    changes["match_date"] = form.cleaned_data["match_date"]
+                if form.cleaned_data["match_time"]:
+                    changes["match_time"] = form.cleaned_data["match_time"]
+                if not changes:
+                    self.message_user(
+                        request, "Нічого не вказано, нічого не змінено.", messages.WARNING
+                    )
+                    return None
+                if "match_time" in changes and "match_date" not in changes:
+                    # a time needs a date: only matches that already have one can get it
+                    matches = queryset.filter(match_date__isnull=False)
+                    skipped = queryset.count() - matches.count()
+                    if skipped:
+                        self.message_user(
+                            request,
+                            f"Без дати, тому час не встановлено: {skipped}.",
+                            messages.WARNING,
+                        )
+                    queryset = matches
+                count = queryset.update(**changes)
+                self.message_user(request, f"Оновлено матчів: {count}.", messages.SUCCESS)
+                return None
+        else:
+            form = SetDateTimeForm()
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Встановити дату й час",
+            "form": form,
+            "matches": queryset,
+            "action": "set_date_time",
+            "selected": request.POST.getlist(admin.helpers.ACTION_CHECKBOX_NAME),
+            "opts": self.model._meta,
+        }
+        return render(request, "admin/matches/set_date_time.html", context)
 
     # entering results round by round
 

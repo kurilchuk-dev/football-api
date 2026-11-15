@@ -110,3 +110,40 @@ class MatchListTests(AdminTestCase):
         response = self.client.get(reverse("admin:matches_match_changelist"), {"q": "Чарлі"})
         self.assertContains(response, "Браво — Чарлі")
         self.assertNotContains(response, "Черкаси ФАМ — Альфа")
+
+
+class MatchActionTests(AdminTestCase):
+    def run_action(self, action, ids, **extra):
+        return self.client.post(
+            reverse("admin:matches_match_changelist"),
+            {"action": action, "_selected_action": ids, **extra},
+            follow=True,
+        )
+
+    def test_shift_forward_and_back(self):
+        self.run_action("shift_forward", [self.m1.id, self.m2.id])
+        self.m1.refresh_from_db()
+        self.assertEqual(self.m1.match_date, date(2026, 11, 16))
+        self.run_action("shift_back", [self.m1.id])
+        self.m1.refresh_from_db()
+        self.assertEqual(self.m1.match_date, date(2026, 11, 15))
+
+    def test_clear_date_and_time(self):
+        self.run_action("clear_date_time", [self.m1.id])
+        self.m1.refresh_from_db()
+        self.assertIsNone(self.m1.match_date)
+        self.assertIsNone(self.m1.match_time)
+
+    def test_set_date_time_asks_first_then_applies(self):
+        asked = self.run_action("set_date_time", [self.m1.id, self.m2.id])
+        self.assertContains(asked, "Застосувати")
+        self.m2.refresh_from_db()
+        self.assertIsNone(self.m2.match_date)
+
+        self.run_action(
+            "set_date_time", [self.m2.id], apply="1", match_date="2026-11-21", match_time="14:00"
+        )
+        self.m2.refresh_from_db()
+        self.assertEqual(
+            (self.m2.match_date, self.m2.match_time), (date(2026, 11, 21), time(14, 0))
+        )
