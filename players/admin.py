@@ -20,7 +20,10 @@ class BulkAddForm(forms.Form):
         widget=forms.Textarea(
             attrs={"rows": 14, "placeholder": "Іваненко Іван\nПетренко Петро 10"}
         ),
-        help_text="Кожен гравець з нового рядка: «Прізвище Ім'я», а після імені, якщо є, номер.",
+        help_text=(
+            "Кожен гравець з нового рядка: «Прізвище Ім'я», а після імені, якщо є, номер. "
+            "По батькові можна не писати, воно не зберігається."
+        ),
     )
 
 
@@ -40,7 +43,7 @@ def parse_players(text):
         if len(words) < 2:
             bad.append(raw.strip())
             continue
-        players.append((words[0], " ".join(words[1:]), number))
+        players.append((words[0], words[1], number))  # a patronymic, if any, is ignored
     return players, bad
 
 
