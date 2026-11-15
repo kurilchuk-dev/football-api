@@ -4,6 +4,7 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from matches.models import Match
+from matches.tests import kickoff
 from teams.models import Team
 
 from .services import calculate_standings
@@ -22,7 +23,7 @@ class StandingsServiceTests(APITestCase):
             away_team=away,
             home_score=home_score,
             away_score=away_score,
-            played_at=self.now - timedelta(days=1),
+            **kickoff(self.now - timedelta(days=1)),
         )
 
     def row(self, table, team):
@@ -51,7 +52,7 @@ class StandingsServiceTests(APITestCase):
         Match.objects.create(
             home_team=self.a,
             away_team=self.b,
-            played_at=self.now + timedelta(days=3),
+            **kickoff(self.now + timedelta(days=3)),
         )
         table = calculate_standings()
         self.assertEqual(self.row(table, self.a)["played"], 0)
@@ -90,7 +91,7 @@ class StandingsServiceTests(APITestCase):
             away_team=away,
             home_score=home_score,
             away_score=away_score,
-            played_at=self.now - timedelta(days=days_ago),
+            **kickoff(self.now - timedelta(days=days_ago)),
         )
 
     def test_form_is_last_five_results_oldest_first(self):

@@ -33,7 +33,11 @@ class MatchViewSet(viewsets.ReadOnlyModelViewSet):
         queryset = (
             self.get_queryset()
             .filter(home_score__isnull=True)
-            .order_by(F("played_at").asc(nulls_last=True), "id")
+            .order_by(
+                F("match_date").asc(nulls_last=True),
+                F("match_time").asc(nulls_last=True),
+                "id",
+            )
         )
         return Response(self.get_serializer(queryset, many=True).data)
 

@@ -191,7 +191,7 @@ class Command(BaseCommand):
                 home_team=teams[home],
                 away_team=teams[away],
                 round=round_number,
-                defaults={"played_at": played_at},
+                defaults={"match_date": played_at.date(), "match_time": played_at.time()},
             )
             created_matches += created
 
