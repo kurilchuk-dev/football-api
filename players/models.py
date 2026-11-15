@@ -8,6 +8,9 @@ class Player(models.Model):
     number = models.PositiveSmallIntegerField(
         null=True, blank=True, help_text="Shirt number; leave empty if not assigned yet."
     )
+    photo = models.ImageField(
+        upload_to="player_photos/", blank=True, help_text="Portrait shown on the team page."
+    )
     is_active = models.BooleanField(default=True)
 
     class Meta:

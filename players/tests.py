@@ -1,11 +1,14 @@
+import shutil
 import tempfile
-from io import StringIO
+from io import BytesIO, StringIO
 from pathlib import Path
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db import IntegrityError
-from django.test import TestCase
+from django.test import TestCase, override_settings
+from PIL import Image
 from rest_framework.test import APITestCase
 
 from teams.models import Team
@@ -33,7 +36,9 @@ class PlayersApiTests(APITestCase):
 
     def test_player_has_no_position_field(self):
         response = self.client.get("/api/players/")
-        self.assertEqual(set(response.data[0]), {"id", "first_name", "last_name", "number"})
+        self.assertEqual(
+            set(response.data[0]), {"id", "first_name", "last_name", "number", "photo"}
+        )
 
     def test_filter_by_team(self):
         other = Team.objects.create(name="Other FC")
@@ -56,6 +61,24 @@ class PlayersApiTests(APITestCase):
     def test_shirt_number_is_unique_per_team(self):
         with self.assertRaises(IntegrityError):
             Player.objects.create(team=self.team, first_name="D", last_name="Dup", number=1)
+
+    def test_photo_is_empty_until_uploaded(self):
+        response = self.client.get("/api/players/")
+        self.assertEqual([p["photo"] for p in response.data], [None, None])
+
+    def test_uploaded_photo_is_served_as_absolute_url(self):
+        media = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, media, ignore_errors=True)
+        buffer = BytesIO()
+        Image.new("RGB", (4, 4), "red").save(buffer, format="PNG")
+        with override_settings(MEDIA_ROOT=media):
+            player = Player.objects.get(last_name="Zed")
+            player.photo = SimpleUploadedFile("face.png", buffer.getvalue(), "image/png")
+            player.save()
+            response = self.client.get("/api/players/")
+        photos = {p["last_name"]: p["photo"] for p in response.data}
+        self.assertRegex(photos["Zed"], r"^http://testserver/media/player_photos/face.*\.png$")
+        self.assertIsNone(photos["Alpha"])
 
     def test_staff_endpoint(self):
         StaffMember.objects.create(

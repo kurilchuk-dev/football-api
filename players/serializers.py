@@ -6,7 +6,7 @@ from .models import Player, StaffMember
 class PlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
-        fields = ["id", "first_name", "last_name", "number"]
+        fields = ["id", "first_name", "last_name", "number", "photo"]
 
 
 class StaffMemberSerializer(serializers.ModelSerializer):
