@@ -17,6 +17,10 @@ class ParsePlayersTests(SimpleTestCase):
         )
         self.assertEqual(bad, [])
 
+    def test_drops_the_patronymic(self):
+        players, _ = parse_players("Іваненко Іван Іванович 7")
+        self.assertEqual(players, [("Іваненко", "Іван", 7)])
+
     def test_reports_lines_it_cannot_read(self):
         players, bad = parse_players("Тільки\nДобрий Рядок")
         self.assertEqual(players, [("Добрий", "Рядок", None)])
