@@ -1,0 +1,54 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<style>
+  .round-nav { display:flex; gap:10px; align-items:center; margin-bottom:16px; flex-wrap:wrap }
+  .round-nav a { padding:6px 12px; border:1px solid rgba(128,128,128,.35); border-radius:8px; text-decoration:none; color:inherit }
+  .round-table { width:100%; max-width:980px; border-collapse:collapse }
+  .round-table td { padding:10px 8px; border-bottom:1px solid rgba(128,128,128,.25); vertical-align:middle }
+  .round-table input { padding:8px; border:1px solid rgba(128,128,128,.35); border-radius:8px; background:transparent; color:inherit }
+  .round-table input[type=number] { width:64px; text-align:center; font-weight:700 }
+  .round-teams { font-weight:600; min-width:220px }
+  .round-score { white-space:nowrap }
+  .round-errors { color:#dc2626; font-size:13px; margin:4px 0 0; padding:0; list-style:none }
+  .round-save { margin-top:18px; padding:12px 22px; border:0; border-radius:10px; background:#dc2626; color:#fff; font-weight:700; cursor:pointer }
+</style>
+
+<div class="round-nav">
+  <a href="{{ rounds_url }}">← Усі тури</a>
+  {% if previous %}<a href="{% url 'admin:matches_match_round' previous %}">← Тур {{ previous }}</a>{% endif %}
+  {% if next %}<a href="{% url 'admin:matches_match_round' next %}">Тур {{ next }} →</a>{% endif %}
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  {{ formset.management_form }}
+  {{ formset.non_form_errors }}
+  <table class="round-table">
+    <thead>
+      <tr style="opacity:.65;font-size:13px;text-align:left">
+        <td>Матч</td><td>Дата</td><td>Час</td><td>Рахунок</td>
+      </tr>
+    </thead>
+    <tbody>
+    {% for form in formset %}
+      <tr>
+        <td class="round-teams">
+          {{ form.id }}
+          {{ form.instance.home_team }} — {{ form.instance.away_team }}
+          {% if form.non_field_errors %}<ul class="round-errors">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </td>
+        <td>{{ form.match_date }}{% if form.match_date.errors %}<ul class="round-errors">{% for e in form.match_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</td>
+        <td>{{ form.match_time }}{% if form.match_time.errors %}<ul class="round-errors">{% for e in form.match_time.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}</td>
+        <td class="round-score">{{ form.home_score }} : {{ form.away_score }}
+          {% if form.home_score.errors or form.away_score.errors %}<ul class="round-errors">{% for e in form.home_score.errors %}<li>{{ e }}</li>{% endfor %}{% for e in form.away_score.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4">У цьому турі немає матчів.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <button type="submit" class="round-save">Зберегти тур</button>
+</form>
+{% endblock %}

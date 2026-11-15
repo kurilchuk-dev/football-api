@@ -85,7 +85,7 @@ class PlayersApiTests(APITestCase):
             team=self.team, first_name="E", last_name="Coach", role="head_coach"
         )
         response = self.client.get("/api/staff/")
-        self.assertEqual(response.data[0]["role_display"], "Head coach")
+        self.assertEqual(response.data[0]["role_display"], "Головний тренер")
 
 
 class ImportRosterTests(TestCase):
@@ -101,10 +101,10 @@ class ImportRosterTests(TestCase):
         call_command("import_roster", str(self.file), "--team", "Test FC", *extra, stdout=out)
         return out.getvalue()
 
-    def test_splits_surname_from_name_and_patronymic(self):
+    def test_keeps_surname_and_name_and_drops_the_patronymic(self):
         self.run_import("Іванов Петро Олегович\nСидоренко Свят\n")
         ivanov = Player.objects.get(last_name="Іванов")
-        self.assertEqual(ivanov.first_name, "Петро Олегович")
+        self.assertEqual(ivanov.first_name, "Петро")
         self.assertIsNone(ivanov.number)
         self.assertEqual(Player.objects.get(last_name="Сидоренко").first_name, "Свят")
 
