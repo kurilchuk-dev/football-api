@@ -29,6 +29,7 @@ if HTTPS_ONLY:
 # Application definition
 
 INSTALLED_APPS = [
+    "unfold",  # the admin theme; must come before django.contrib.admin
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -172,3 +173,31 @@ MAILERS = {
 
 # How long a CDN may cache the public API (seconds). 0 turns the cache headers off.
 API_CACHE_SECONDS = env.int("API_CACHE_SECONDS", default=60)
+
+# Admin theme (https://unfoldadmin.com): the club red, sidebar with search.
+UNFOLD = {
+    "SITE_TITLE": "Черкаси ФАМ",
+    "SITE_HEADER": "Черкаси ФАМ",
+    "SITE_SYMBOL": "sports_soccer",
+    "SHOW_HISTORY": True,
+    "SHOW_VIEW_ON_SITE": False,
+    "COLORS": {
+        "primary": {
+            "50": "254 242 242",
+            "100": "254 226 226",
+            "200": "254 202 202",
+            "300": "252 165 165",
+            "400": "248 113 113",
+            "500": "239 68 68",
+            "600": "220 38 38",
+            "700": "185 28 28",
+            "800": "153 27 27",
+            "900": "127 29 29",
+            "950": "69 10 10",
+        },
+    },
+    "SIDEBAR": {"show_search": True, "show_all_applications": True},
+}
+
+# After signing in the admin theme sends people to "/accounts/profile/" unless told otherwise.
+LOGIN_REDIRECT_URL = "/admin/"
