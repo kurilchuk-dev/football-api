@@ -1,0 +1,41 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# Deploys only from `main`, and only after the CI checks of that commit pass.
+services:
+  - type: web
+    name: football-api
+    runtime: python
+    plan: free
+    branch: main
+    autoDeployTrigger: checksPass
+    healthCheckPath: /health/
+    buildCommand: >-
+      pip install -r requirements.txt
+      && python manage.py collectstatic --noinput
+      && python manage.py migrate --noinput
+      && (python manage.py createsuperuser --noinput || true)
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: DEBUG
+        value: 'False'
+      - key: HTTPS_ONLY
+        value: 'True'
+      - key: SECRET_KEY
+        generateValue: true
+      # Secrets and per-environment values: set them in the Render dashboard.
+      - key: DATABASE_URL # Postgres connection string (Neon)
+        sync: false
+      - key: CLOUDINARY_URL # cloudinary://<key>:<secret>@<cloud name>
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS # https://<your-site>.pages.dev
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS # https://<service>.onrender.com
+        sync: false
+      # First admin account, created on the first deploy (skipped once it exists).
+      - key: DJANGO_SUPERUSER_USERNAME
+        sync: false
+      - key: DJANGO_SUPERUSER_EMAIL
+        sync: false
+      - key: DJANGO_SUPERUSER_PASSWORD
+        sync: false
