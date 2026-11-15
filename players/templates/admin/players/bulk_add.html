@@ -1,0 +1,20 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<form method="post" style="max-width: 640px">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  {% for field in form %}
+    <div style="margin-bottom: 18px">
+      <label for="{{ field.id_for_label }}" style="display:block;font-weight:600;margin-bottom:6px">{{ field.label }}</label>
+      {{ field }}
+      {% if field.help_text %}<p style="opacity:.7;font-size:13px;margin:6px 0 0">{{ field.help_text }}</p>{% endif %}
+      {{ field.errors }}
+    </div>
+  {% endfor %}
+  <button type="submit" class="button" style="padding:10px 18px;border-radius:8px;background:#dc2626;color:#fff;border:0;cursor:pointer">Додати гравців</button>
+</form>
+<style>
+  form select, form textarea { width: 100%; padding: 10px; border: 1px solid rgba(128,128,128,.35); border-radius: 8px; background: transparent; color: inherit; }
+</style>
+{% endblock %}
