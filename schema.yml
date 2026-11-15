@@ -102,6 +102,12 @@ paths:
   /api/players/:
     get:
       operationId: players_list
+      parameters:
+        - in: query
+          name: team
+          schema:
+            type: integer
+          description: Show only players of the team with this id
       tags:
         - players
       security:
