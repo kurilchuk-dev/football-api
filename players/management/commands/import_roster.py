@@ -7,15 +7,18 @@ from teams.models import Team
 
 
 def split_name(full_name):
-    """'Surname Name Patronymic' -> ('Name Patronymic', 'Surname')."""
-    last_name, _, first_name = full_name.strip().partition(" ")
-    return first_name.strip(), last_name
+    """'Surname Name Patronymic' -> ('Name', 'Surname'); the patronymic is not kept."""
+    words = full_name.split()
+    if not words:
+        return "", ""
+    return (words[1] if len(words) > 1 else ""), words[0]
 
 
 class Command(BaseCommand):
     help = (
         "Add players to a team from a text file with one full name per line "
-        "('Surname Name [Patronymic]'). Players that already exist are skipped, "
+        "('Surname Name [Patronymic]'; the patronymic is ignored). "
+        "Players that already exist are skipped, "
         "so the command is safe to run again."
     )
 
