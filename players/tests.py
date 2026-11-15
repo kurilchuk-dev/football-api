@@ -85,7 +85,7 @@ class PlayersApiTests(APITestCase):
             team=self.team, first_name="E", last_name="Coach", role="head_coach"
         )
         response = self.client.get("/api/staff/")
-        self.assertEqual(response.data[0]["role_display"], "Head coach")
+        self.assertEqual(response.data[0]["role_display"], "Головний тренер")
 
 
 class ImportRosterTests(TestCase):

@@ -8,27 +8,33 @@ from django.utils import timezone
 
 class Match(models.Model):
     home_team = models.ForeignKey(
-        "teams.Team", on_delete=models.PROTECT, related_name="home_matches"
+        "teams.Team",
+        on_delete=models.PROTECT,
+        related_name="home_matches",
+        verbose_name="господарі",
     )
     away_team = models.ForeignKey(
-        "teams.Team", on_delete=models.PROTECT, related_name="away_matches"
+        "teams.Team", on_delete=models.PROTECT, related_name="away_matches", verbose_name="гості"
     )
-    home_score = models.PositiveSmallIntegerField(null=True, blank=True)
-    away_score = models.PositiveSmallIntegerField(null=True, blank=True)
+    home_score = models.PositiveSmallIntegerField("голи господарів", null=True, blank=True)
+    away_score = models.PositiveSmallIntegerField("голи гостей", null=True, blank=True)
     match_date = models.DateField(
-        null=True, blank=True, help_text="Leave empty if the date is not known yet."
+        "дата", null=True, blank=True, help_text="Залиште порожнім, якщо дата ще невідома."
     )
     match_time = models.TimeField(
+        "час",
         null=True,
         blank=True,
-        help_text="Kick-off time (Kyiv). Leave empty if only the date is known so far.",
+        help_text="Початок матчу (за Києвом). Залиште порожнім, якщо відома лише дата.",
     )
     round = models.PositiveSmallIntegerField(
-        null=True, blank=True, help_text="Round (matchday) number, e.g. 5 for round 5."
+        "тур", null=True, blank=True, help_text="Номер туру, наприклад 5."
     )
 
     class Meta:
         # Newest first; matches without a date (or time) go last, on every database.
+        verbose_name = "матч"
+        verbose_name_plural = "матчі"
         ordering = [
             F("match_date").desc(nulls_last=True),
             F("match_time").desc(nulls_last=True),
