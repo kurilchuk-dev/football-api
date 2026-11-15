@@ -2,9 +2,11 @@
 # Deploys only from `main`, and only after the CI checks of that commit pass.
 services:
   - type: web
-    name: football-api
+    name: football-api-eu
     runtime: python
     plan: free
+    # Same region as the Neon database (Frankfurt), so queries do not cross the ocean.
+    region: frankfurt
     branch: main
     autoDeployTrigger: checksPass
     healthCheckPath: /health/
