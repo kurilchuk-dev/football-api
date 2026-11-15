@@ -36,6 +36,60 @@ class AdminTestCase(TestCase):
         self.m2 = Match.objects.create(home_team=self.b, away_team=self.c, round=1)
 
 
+class RoundPageTests(AdminTestCase):
+    def test_lists_rounds_with_progress(self):
+        response = self.client.get(reverse("admin:matches_match_rounds"))
+        self.assertContains(response, "Тур 1")
+        self.assertContains(response, "зіграно 0 з 2")
+
+    def test_round_page_shows_the_matches(self):
+        response = self.client.get(reverse("admin:matches_match_round", args=[1]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Черкаси ФАМ — Альфа")
+        self.assertContains(response, "Браво — Чарлі")
+
+    def _post(self, **overrides):
+        data = {
+            "form-TOTAL_FORMS": "2",
+            "form-INITIAL_FORMS": "2",
+            "form-MIN_NUM_FORMS": "0",
+            "form-MAX_NUM_FORMS": "1000",
+            "form-0-id": self.m1.id,
+            "form-0-match_date": "2026-11-15",
+            "form-0-match_time": "10:00",
+            "form-0-home_score": "3",
+            "form-0-away_score": "1",
+            "form-1-id": self.m2.id,
+            "form-1-match_date": "2026-11-16",
+            "form-1-match_time": "",
+            "form-1-home_score": "",
+            "form-1-away_score": "",
+        }
+        data.update(overrides)
+        return self.client.post(reverse("admin:matches_match_round", args=[1]), data)
+
+    def test_saves_scores_dates_and_times_for_the_whole_round(self):
+        response = self._post()
+        self.assertEqual(response.status_code, 302)
+        self.m1.refresh_from_db()
+        self.m2.refresh_from_db()
+        self.assertEqual((self.m1.home_score, self.m1.away_score), (3, 1))
+        self.assertEqual(self.m2.match_date, date(2026, 11, 16))
+        self.assertIsNone(self.m2.match_time)  # a date without a time is fine
+
+    def test_a_single_score_is_rejected(self):
+        response = self._post(**{"form-0-away_score": ""})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "обох команд")
+        self.m1.refresh_from_db()
+        self.assertIsNone(self.m1.home_score)
+
+    def test_a_time_without_a_date_is_rejected(self):
+        response = self._post(**{"form-1-match_date": "", "form-1-match_time": "12:00"})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "дату")
+
+
 class MatchListTests(AdminTestCase):
     def test_list_shows_readable_titles_and_when(self):
         response = self.client.get(reverse("admin:matches_match_changelist"))

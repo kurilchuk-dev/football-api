@@ -1,6 +1,11 @@
-from django.contrib import admin
-from django.db.models import F, Q
+from django import forms
+from django.contrib import admin, messages
+from django.db.models import Count, F, Q
+from django.forms import modelformset_factory
+from django.shortcuts import redirect, render
+from django.urls import path, reverse
 from unfold.admin import ModelAdmin
+from unfold.decorators import action
 
 from .models import Match
 
@@ -60,6 +65,20 @@ class WhenFilter(admin.SimpleListFilter):
         return queryset
 
 
+ROUND_FIELDS = ("match_date", "match_time", "home_score", "away_score")
+RoundFormSet = modelformset_factory(
+    Match,
+    fields=ROUND_FIELDS,
+    extra=0,
+    widgets={
+        "match_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+        "match_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+        "home_score": forms.NumberInput(attrs={"min": 0, "inputmode": "numeric"}),
+        "away_score": forms.NumberInput(attrs={"min": 0, "inputmode": "numeric"}),
+    },
+)
+
+
 # --- admin -----------------------------------------------------------------------------------
 
 
@@ -80,6 +99,7 @@ class MatchAdmin(ModelAdmin):
         ("match_date", "match_time"),
         ("home_score", "away_score"),
     )
+    actions_list = ["rounds_link"]
 
     # list columns
 
@@ -96,3 +116,78 @@ class MatchAdmin(ModelAdmin):
         if obj.match_time is None:
             return f"{day} · час уточнюється"
         return f"{day} · {obj.match_time:%H:%M}"
+
+    # buttons above the list
+
+    @action(description="Внести результати по турах", icon="edit_calendar", url_path="rounds-link")
+    def rounds_link(self, request):
+        return redirect(reverse("admin:matches_match_rounds"))
+
+    # entering results round by round
+
+    def get_urls(self):
+        wrap = self.admin_site.admin_view
+        custom = [
+            path("rounds/", wrap(self.rounds_view), name="matches_match_rounds"),
+            path("rounds/<int:number>/", wrap(self.round_view), name="matches_match_round"),
+        ]
+        return custom + super().get_urls()
+
+    def rounds_view(self, request):
+        if not self.has_view_or_change_permission(request):
+            return redirect("admin:index")
+        rounds = (
+            Match.objects.filter(round__isnull=False)
+            .values("round")
+            .annotate(total=Count("id"), played=Count("id", filter=PLAYED))
+            .order_by("round")
+        )
+        rows = [
+            {
+                "number": item["round"],
+                "total": item["total"],
+                "played": item["played"],
+                "url": reverse("admin:matches_match_round", args=[item["round"]]),
+            }
+            for item in rounds
+        ]
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Тури",
+            "rows": rows,
+            "opts": self.model._meta,
+        }
+        return render(request, "admin/matches/rounds.html", context)
+
+    def round_view(self, request, number):
+        if not self.has_change_permission(request):
+            return redirect("admin:index")
+        queryset = order_by_kickoff(
+            Match.objects.filter(round=number).select_related("home_team", "away_team")
+        )
+        if request.method == "POST":
+            formset = RoundFormSet(request.POST, queryset=queryset)
+            if formset.is_valid():
+                formset.save()
+                self.message_user(request, f"Тур {number} збережено.", messages.SUCCESS)
+                return redirect("admin:matches_match_round", number=number)
+        else:
+            formset = RoundFormSet(queryset=queryset)
+        rounds = list(
+            Match.objects.filter(round__isnull=False)
+            .values_list("round", flat=True)
+            .distinct()
+            .order_by("round")
+        )
+        position = rounds.index(number) if number in rounds else -1
+        context = {
+            **self.admin_site.each_context(request),
+            "title": f"Тур {number}",
+            "formset": formset,
+            "number": number,
+            "previous": rounds[position - 1] if position > 0 else None,
+            "next": rounds[position + 1] if 0 <= position < len(rounds) - 1 else None,
+            "rounds_url": reverse("admin:matches_match_rounds"),
+            "opts": self.model._meta,
+        }
+        return render(request, "admin/matches/round.html", context)
