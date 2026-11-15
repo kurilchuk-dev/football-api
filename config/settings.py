@@ -65,8 +65,13 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "config.cache.PublicApiCacheMiddleware",
 ]
 
+# The /api/ is public and read-only (no cookies, no credentials), so any site may read it. That also
+# keeps the CDN cache safe: the response does not depend on which site asked.
+CORS_URLS_REGEX = r"^/api/.*$"
+CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL_ORIGINS", default=True)
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 # For example https://.*\.pages\.dev to also allow preview deployments of the frontend.
 CORS_ALLOWED_ORIGIN_REGEXES = env.list("CORS_ALLOWED_ORIGIN_REGEXES", default=[])
@@ -164,3 +169,6 @@ MAILERS = {
         "BACKEND": "django.core.mail.backends.console.EmailBackend",
     },
 }
+
+# How long a CDN may cache the public API (seconds). 0 turns the cache headers off.
+API_CACHE_SECONDS = env.int("API_CACHE_SECONDS", default=60)
