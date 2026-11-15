@@ -147,3 +147,20 @@ class MatchActionTests(AdminTestCase):
         self.assertEqual(
             (self.m2.match_date, self.m2.match_time), (date(2026, 11, 21), time(14, 0))
         )
+
+
+class ExportTests(AdminTestCase):
+    def test_exports_are_csv_with_ukrainian_headers(self):
+        response = self.client.post(
+            reverse("admin:matches_match_changelist"),
+            {"action": "export_csv", "_selected_action": [self.m1.id]},
+        )
+        self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")
+        text = response.content.decode("utf-8-sig")
+        self.assertIn("Господарі", text)
+        self.assertIn("Черкаси ФАМ", text)
+
+        standings = self.client.get(reverse("admin:matches_match_export_standings_link"))
+        self.assertIn("Команда", standings.content.decode("utf-8-sig"))
+        calendar = self.client.get(reverse("admin:matches_match_export_calendar_link"))
+        self.assertIn("Тур", calendar.content.decode("utf-8-sig"))

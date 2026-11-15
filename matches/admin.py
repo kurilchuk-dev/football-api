@@ -1,13 +1,17 @@
+import csv
 from datetime import timedelta
 
 from django import forms
 from django.contrib import admin, messages
 from django.db.models import Count, F, Q
 from django.forms import modelformset_factory
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import path, reverse
 from unfold.admin import ModelAdmin
 from unfold.decorators import action
+
+from standings.services import calculate_standings
 
 from .models import Match
 
@@ -116,8 +120,8 @@ class MatchAdmin(ModelAdmin):
         ("match_date", "match_time"),
         ("home_score", "away_score"),
     )
-    actions = ["shift_forward", "shift_back", "clear_date_time", "set_date_time"]
-    actions_list = ["rounds_link"]
+    actions = ["shift_forward", "shift_back", "clear_date_time", "set_date_time", "export_csv"]
+    actions_list = ["rounds_link", "export_calendar_link", "export_standings_link"]
 
     # list columns
 
@@ -140,6 +144,36 @@ class MatchAdmin(ModelAdmin):
     @action(description="Внести результати по турах", icon="edit_calendar", url_path="rounds-link")
     def rounds_link(self, request):
         return redirect(reverse("admin:matches_match_rounds"))
+
+    @action(description="Експорт календаря (CSV)", icon="download", url_path="export-calendar")
+    def export_calendar_link(self, request):
+        return self._calendar_csv(order_by_kickoff(self.get_queryset(request)))
+
+    @action(description="Експорт таблиці (CSV)", icon="leaderboard", url_path="export-standings")
+    def export_standings_link(self, request):
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = 'attachment; filename="standings.csv"'
+        response.write("﻿")  # so Excel opens the Ukrainian text correctly
+        writer = csv.writer(response)
+        writer.writerow(
+            ["Місце", "Команда", "І", "В", "Н", "П", "Забито", "Пропущено", "Різниця", "Очки"]
+        )
+        for row in calculate_standings():
+            writer.writerow(
+                [
+                    row["position"],
+                    row["team"]["name"],
+                    row["played"],
+                    row["won"],
+                    row["drawn"],
+                    row["lost"],
+                    row["goals_for"],
+                    row["goals_against"],
+                    row["goal_difference"],
+                    row["points"],
+                ]
+            )
+        return response
 
     # actions on the selected matches
 
@@ -208,6 +242,32 @@ class MatchAdmin(ModelAdmin):
             "opts": self.model._meta,
         }
         return render(request, "admin/matches/set_date_time.html", context)
+
+    @admin.action(description="Експорт вибраних у CSV")
+    def export_csv(self, request, queryset):
+        return self._calendar_csv(order_by_kickoff(queryset))
+
+    def _calendar_csv(self, queryset):
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = 'attachment; filename="calendar.csv"'
+        response.write("﻿")
+        writer = csv.writer(response)
+        writer.writerow(
+            ["Тур", "Дата", "Час", "Господарі", "Гості", "Голи господарів", "Голи гостей"]
+        )
+        for match in queryset.select_related("home_team", "away_team"):
+            writer.writerow(
+                [
+                    match.round if match.round is not None else "",
+                    match.match_date.strftime("%d.%m.%Y") if match.match_date else "",
+                    f"{match.match_time:%H:%M}" if match.match_time else "",
+                    match.home_team,
+                    match.away_team,
+                    "" if match.home_score is None else match.home_score,
+                    "" if match.away_score is None else match.away_score,
+                ]
+            )
+        return response
 
     # entering results round by round
 
