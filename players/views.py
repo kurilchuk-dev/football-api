@@ -9,10 +9,15 @@ TEAM_PARAMETER = OpenApiParameter(
     type=int,
     description="Show only players of the team with this id",
 )
+OUR_TEAM_PARAMETER = OpenApiParameter(
+    name="our_team",
+    type=bool,
+    description="true: show only players of our team (the one marked as ours), no id needed",
+)
 
 
 @extend_schema_view(
-    list=extend_schema(parameters=[TEAM_PARAMETER]),
+    list=extend_schema(parameters=[TEAM_PARAMETER, OUR_TEAM_PARAMETER]),
 )
 class PlayerViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PlayerSerializer
@@ -22,6 +27,8 @@ class PlayerViewSet(viewsets.ReadOnlyModelViewSet):
         team = self.request.query_params.get("team")
         if team and team.isdigit():
             queryset = queryset.filter(team_id=team)
+        if self.request.query_params.get("our_team", "").lower() in ("1", "true"):
+            queryset = queryset.filter(team__is_our_team=True)
         return queryset
 
 
