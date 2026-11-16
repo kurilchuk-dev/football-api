@@ -1,8 +1,13 @@
 name: Keep alive
 
 # The free Render plan puts the API to sleep after ~15 minutes without requests,
-# and the first request afterwards takes about a minute. Ping /health/ (it does
-# not touch the database, so Neon is still free to sleep) every 10 minutes.
+# and the first request afterwards takes about a minute. /health/ does not touch
+# the database, so Neon is still free to sleep.
+#
+# This workflow is only a BACKUP. The primary pinger is an UptimeRobot monitor
+# (every 5 minutes). GitHub throttles and skips `schedule` runs on free repos
+# (in practice once every few hours instead of every 10 minutes), so on its own
+# this workflow does not keep the API awake.
 on:
   schedule:
     - cron: '*/10 * * * *'

@@ -48,11 +48,16 @@ GitHub (main) ─┬─► Cloudflare Pages ── сайт (football-web)
 | `DJANGO_SUPERUSER_USERNAME` / `_EMAIL` / `_PASSWORD` | вхід в адмінку (створюється при першому деплої)                                                         |
 
 3. Після деплою перевірте: `https://<сервіс>.onrender.com/health/` → `{"status": "ok"}`, а `/api/docs/` показує Swagger.
+   `/health/` не чіпає базу (його пінгує UptimeRobot і Render, тому не можна будити Neon щоразу); перевірити базу вручну: `/health/db/`.
 4. У Settings сервісу залиште **Auto-Deploy: After CI checks pass** і **Branch: main** (так уже вказано в `render.yaml`).
 
 Що відбувається на кожному деплої (див. `buildCommand` у `render.yaml`): встановлення залежностей → `collectstatic` → `migrate` → (повторно) створення суперкористувача, якщо його ще немає.
 
-> **Безкоштовний тариф Render засинає** після ~15 хв без запитів, перший запит після цього триває до хвилини. Якщо заважає, можна пінгувати `/health/` зовнішнім сервісом (напр. UptimeRobot) раз на 10 хв.
+> **Безкоштовний тариф Render засинає** після ~15 хв без запитів, перший запит після цього триває від хвилини і довше. Щоб API не засинало, `/health/` пінгує **UptimeRobot** (HTTP(s)-монітор, інтервал 5 хв, акаунт власника).
+>
+> Заплановані запуски GitHub Actions для цього **не підходять**: на безкоштовних репозиторіях GitHub затримує й пропускає `schedule`-запуски (на практиці раз на кілька годин замість кожних 10 хв), тому API все одно засинало. Workflow `.github/workflows/keep-alive.yml` лишився лише як запасний варіант.
+>
+> Якщо сайт знову довго вантажиться, перевірте монітор в UptimeRobot (статус Up, час відповіді) і що `/health/` відповідає `200`.
 
 ## 4. Сайт: Cloudflare Pages
 
@@ -62,6 +67,7 @@ GitHub (main) ─┬─► Cloudflare Pages ── сайт (football-web)
     - Build command: `npm run build`
     - Build output directory: `dist`
     - Змінні середовища: `VITE_API_URL` = `https://<сервіс>.onrender.com/api`, `NODE_VERSION` = `22`
+    - `VITE_SITE_URL` = адреса самого сайту (`https://….pages.dev`): за нею при збірці створюються `sitemap.xml` і картинка для превʼю посилань у месенджерах. Без неї ці файли не генеруються.
 3. **Branch deployments → None** (Settings → Builds), щоб preview-збірки з інших гілок не створювались: деплой лише з `main`.
 4. Скопіюйте адресу сайту (`https://….pages.dev`) і впишіть у `CORS_ALLOWED_ORIGINS` на Render (крок 3). Render перезапуститься.
 
