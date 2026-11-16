@@ -32,3 +32,14 @@ class ApiCacheHeaderTests(APITestCase):
     def test_health_and_admin_are_not_cached(self):
         self.assertNotIn("s-maxage", self.client.get("/health/").get("Cache-Control", ""))
         self.assertNotIn("s-maxage", self.client.get("/admin/").get("Cache-Control", ""))
+
+
+class ApiCompressionTests(APITestCase):
+    def test_large_api_responses_are_gzipped_when_the_client_accepts_it(self):
+        response = self.client.get("/api/schema/", HTTP_ACCEPT_ENCODING="gzip")
+        self.assertEqual(response["Content-Encoding"], "gzip")
+        self.assertIn("Accept-Encoding", response["Vary"])
+
+    def test_responses_stay_plain_without_accept_encoding(self):
+        response = self.client.get("/api/schema/")
+        self.assertNotIn("Content-Encoding", response)
