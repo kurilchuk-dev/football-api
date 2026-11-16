@@ -67,6 +67,7 @@ GitHub (main) ─┬─► Cloudflare Pages ── сайт (football-web)
     - Build command: `npm run build`
     - Build output directory: `dist`
     - Змінні середовища: `VITE_API_URL` = `https://<сервіс>.onrender.com/api`, `NODE_VERSION` = `22`
+    - `VITE_SITE_URL` = адреса самого сайту (`https://….pages.dev`): за нею при збірці створюються `sitemap.xml` і картинка для превʼю посилань у месенджерах. Без неї ці файли не генеруються.
 3. **Branch deployments → None** (Settings → Builds), щоб preview-збірки з інших гілок не створювались: деплой лише з `main`.
 4. Скопіюйте адресу сайту (`https://….pages.dev`) і впишіть у `CORS_ALLOWED_ORIGINS` на Render (крок 3). Render перезапуститься.
 
