@@ -19,6 +19,10 @@ LOCATION = {
 
 
 class VisitLogTests(TestCase):
+    def setUp(self):
+        # conftest.py switches the log off for the other tests; these ones need it
+        self.enterContext(override_settings(VISIT_LOG_ENABLED=True))
+
     def test_api_request_is_logged_with_ip_and_location(self):
         with mock.patch("visitors.middleware.locate", return_value=LOCATION):
             self.client.get("/api/matches/", REMOTE_ADDR="8.8.8.8", HTTP_USER_AGENT="test-agent")
@@ -50,7 +54,7 @@ class VisitLogTests(TestCase):
         self.client.get("/api/docs/")
         self.client.get("/api/schema/")
         self.client.get("/health/")
-        self.client.get("/admin/login/")
+        self.client.get("/admin/")  # a redirect; the login page itself needs collectstatic
         self.assertEqual(Visit.objects.count(), 0)
 
     @override_settings(VISIT_LOG_ENABLED=False)
