@@ -104,6 +104,11 @@ paths:
       operationId: players_list
       parameters:
         - in: query
+          name: our_team
+          schema:
+            type: boolean
+          description: 'true: show only players of our team (the one marked as ours), no id needed'
+        - in: query
           name: team
           schema:
             type: integer
