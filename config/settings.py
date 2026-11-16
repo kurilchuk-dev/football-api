@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "standings",
     "matches",
     "players",
+    "visitors",
 ]
 
 REST_FRAMEWORK = {
@@ -68,6 +69,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "config.cache.PublicApiCacheMiddleware",
+    "visitors.middleware.VisitLogMiddleware",
 ]
 
 # The /api/ is public and read-only (no cookies, no credentials), so any site may read it. That also
@@ -202,3 +204,11 @@ UNFOLD = {
 
 # After signing in the admin theme sends people to "/accounts/profile/" unless told otherwise.
 LOGIN_REDIRECT_URL = "/admin/"
+
+
+# Visitor log: IP + approximate location (MaxMind GeoLite2-City, see `manage.py update_geoip`).
+VISIT_LOG_ENABLED = env.bool("VISIT_LOG_ENABLED", default=True)
+VISIT_LOG_RETENTION_DAYS = env.int("VISIT_LOG_RETENTION_DAYS", default=90)
+GEOIP_DB_PATH = Path(env("GEOIP_DB_PATH", default=str(BASE_DIR / "geoip" / "GeoLite2-City.mmdb")))
+MAXMIND_ACCOUNT_ID = env("MAXMIND_ACCOUNT_ID", default="")
+MAXMIND_LICENSE_KEY = env("MAXMIND_LICENSE_KEY", default="")
