@@ -36,3 +36,6 @@ docker-compose.override.yml
 
 # Node tooling (husky, lint-staged, commitlint)
 node_modules/
+
+# GeoLite2 database (downloaded by `manage.py update_geoip`)
+/geoip/
