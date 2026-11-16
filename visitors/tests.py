@@ -2,8 +2,10 @@ from datetime import timedelta
 from io import StringIO
 from unittest import mock
 
+from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import TestCase, override_settings
+from django.urls import reverse
 from django.utils import timezone
 
 from .models import Visit
@@ -75,3 +77,62 @@ class PurgeVisitsTests(TestCase):
         Visit.objects.create(ip="2.2.2.2", path="/api/b/", method="GET", status_code=200)
         call_command("purge_visits", stdout=StringIO())
         self.assertEqual(list(Visit.objects.values_list("ip", flat=True)), ["2.2.2.2"])
+
+
+PLAIN_STORAGE = override_settings(
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+)
+
+
+@PLAIN_STORAGE
+class StatsPageTests(TestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_superuser("boss", "b@example.com", "pw")
+        self.client.force_login(self.admin)
+
+    def visit(self, ip, path="/api/matches/", city="", country=""):
+        return Visit.objects.create(
+            ip=ip, path=path, method="GET", status_code=200, city=city, country=country
+        )
+
+    def test_page_counts_visits_and_unique_ips(self):
+        self.visit("1.1.1.1", city="Київ", country="Україна")
+        self.visit("1.1.1.1", city="Київ", country="Україна")
+        self.visit("2.2.2.2", path="/api/players/")
+        response = self.client.get(reverse("admin:visitors_visit_stats"))
+        self.assertEqual(response.status_code, 200)
+        totals = dict(response.context["totals"])
+        self.assertEqual(totals["Запитів за добу"], 3)
+        self.assertEqual(totals["Унікальних IP за добу"], 2)
+        self.assertEqual(response.context["countries"][0]["label"], "Україна")
+        self.assertEqual(response.context["countries"][0]["total"], 2)
+        self.assertEqual(response.context["countries"][1]["label"], "Невідомо")
+        self.assertEqual([row["label"] for row in response.context["cities"]], ["Київ"])
+        self.assertEqual(response.context["paths"][0]["label"], "/api/matches/")
+
+    def test_days_include_empty_ones_and_the_newest_is_first(self):
+        old = self.visit("1.1.1.1")
+        Visit.objects.filter(pk=old.pk).update(created_at=timezone.now() - timedelta(days=3))
+        self.visit("2.2.2.2")
+        per_day = self.client.get(reverse("admin:visitors_visit_stats")).context["per_day"]
+        self.assertEqual(len(per_day), 30)
+        self.assertEqual(per_day[0]["total"], 1)
+        self.assertEqual([row["total"] for row in per_day[:4]], [1, 0, 0, 1])
+
+    def test_works_without_any_visits(self):
+        response = self.client.get(reverse("admin:visitors_visit_stats"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Даних ще немає.")
+
+    def test_button_on_the_list_opens_the_page(self):
+        response = self.client.get(reverse("admin:visitors_visit_changelist"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Статистика")
+
+    def test_anonymous_user_is_sent_to_the_login(self):
+        self.client.logout()
+        response = self.client.get(reverse("admin:visitors_visit_stats"))
+        self.assertEqual(response.status_code, 302)

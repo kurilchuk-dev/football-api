@@ -1,0 +1,63 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<style>
+  .stats-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:12px; max-width:980px; margin-bottom:28px }
+  .stats-card { padding:14px 16px; border:1px solid rgba(128,128,128,.35); border-radius:12px }
+  .stats-card b { display:block; font-size:26px; line-height:1.2 }
+  .stats-card span { opacity:.7; font-size:13px }
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:24px; max-width:980px }
+  .stats-block h2 { font-size:16px; font-weight:700; margin:0 0 10px }
+  .stats-row { position:relative; display:flex; justify-content:space-between; gap:12px; padding:6px 10px; margin-bottom:4px; border-radius:8px; overflow:hidden; font-size:14px }
+  .stats-row i { position:absolute; inset:0 auto 0 0; background:rgba(220,38,38,.18); z-index:0 }
+  .stats-row span, .stats-row strong { position:relative; z-index:1 }
+  .stats-row span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  .stats-empty { opacity:.6; font-size:14px }
+  .stats-back { display:inline-block; margin-bottom:16px; padding:6px 12px; border:1px solid rgba(128,128,128,.35); border-radius:8px; text-decoration:none; color:inherit }
+</style>
+
+<a class="stats-back" href="{{ list_url }}">← Усі візити</a>
+
+<div class="stats-cards">
+  {% for label, value in totals %}
+    <div class="stats-card"><b>{{ value }}</b><span>{{ label }}</span></div>
+  {% endfor %}
+</div>
+
+<div class="stats-grid">
+  <div class="stats-block">
+    <h2>Країни</h2>
+    {% for row in countries %}
+      <div class="stats-row"><i style="width:{{ row.percent }}%"></i><span>{{ row.label }}</span><strong>{{ row.total }}</strong></div>
+    {% empty %}<p class="stats-empty">Даних ще немає.</p>{% endfor %}
+  </div>
+
+  <div class="stats-block">
+    <h2>Міста</h2>
+    {% for row in cities %}
+      <div class="stats-row"><i style="width:{{ row.percent }}%"></i><span>{{ row.label }}</span><strong>{{ row.total }}</strong></div>
+    {% empty %}<p class="stats-empty">Міста ще не визначені.</p>{% endfor %}
+  </div>
+
+  <div class="stats-block">
+    <h2>Що відкривають</h2>
+    {% for row in paths %}
+      <div class="stats-row"><i style="width:{{ row.percent }}%"></i><span>{{ row.label }}</span><strong>{{ row.total }}</strong></div>
+    {% empty %}<p class="stats-empty">Даних ще немає.</p>{% endfor %}
+  </div>
+
+  <div class="stats-block">
+    <h2>Найактивніші IP</h2>
+    {% for row in ips %}
+      <div class="stats-row"><i style="width:{{ row.percent }}%"></i><span>{{ row.label }}</span><strong>{{ row.total }}</strong></div>
+    {% empty %}<p class="stats-empty">Даних ще немає.</p>{% endfor %}
+  </div>
+
+  <div class="stats-block">
+    <h2>По днях (останні {{ days }})</h2>
+    {% for row in per_day %}
+      <div class="stats-row"><i style="width:{{ row.percent }}%"></i><span>{{ row.label|date:"d.m.Y" }} · унікальних IP: {{ row.unique }}</span><strong>{{ row.total }}</strong></div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
