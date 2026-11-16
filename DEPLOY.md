@@ -48,6 +48,7 @@ GitHub (main) ─┬─► Cloudflare Pages ── сайт (football-web)
 | `DJANGO_SUPERUSER_USERNAME` / `_EMAIL` / `_PASSWORD` | вхід в адмінку (створюється при першому деплої)                                                         |
 
 3. Після деплою перевірте: `https://<сервіс>.onrender.com/health/` → `{"status": "ok"}`, а `/api/docs/` показує Swagger.
+   `/health/` не чіпає базу (його пінгує UptimeRobot і Render, тому не можна будити Neon щоразу); перевірити базу вручну: `/health/db/`.
 4. У Settings сервісу залиште **Auto-Deploy: After CI checks pass** і **Branch: main** (так уже вказано в `render.yaml`).
 
 Що відбувається на кожному деплої (див. `buildCommand` у `render.yaml`): встановлення залежностей → `collectstatic` → `migrate` → (повторно) створення суперкористувача, якщо його ще немає.
