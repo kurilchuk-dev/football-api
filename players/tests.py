@@ -124,3 +124,38 @@ class ImportRosterTests(TestCase):
         self.file.write_text("Іванов Петро\n", encoding="utf-8")
         with self.assertRaises(CommandError):
             call_command("import_roster", str(self.file), "--team", "Nope")
+
+
+class PlayersOurTeamFilterTests(APITestCase):
+    def setUp(self):
+        ours = Team.objects.create(name="Ours", is_our_team=True)
+        other = Team.objects.create(name="Other")
+        Player.objects.create(team=ours, first_name="A", last_name="Ours1", number=1)
+        Player.objects.create(team=ours, first_name="B", last_name="Ours2", number=2)
+        Player.objects.create(team=other, first_name="C", last_name="Other1", number=1)
+        Player.objects.create(
+            team=ours, first_name="D", last_name="Gone", number=3, is_active=False
+        )
+        self.ours, self.other = ours, other
+
+    def names(self, query):
+        return [p["last_name"] for p in self.client.get(f"/api/players/{query}").data]
+
+    def test_our_team_filter_needs_no_team_id(self):
+        self.assertEqual(self.names("?our_team=true"), ["Ours1", "Ours2"])
+        self.assertEqual(self.names("?our_team=1"), ["Ours1", "Ours2"])
+
+    def test_without_the_filter_every_active_player_is_listed(self):
+        self.assertEqual(self.names(""), ["Other1", "Ours1", "Ours2"])
+
+    def test_false_or_unknown_values_do_not_filter(self):
+        self.assertEqual(len(self.names("?our_team=false")), 3)
+        self.assertEqual(len(self.names("?our_team=maybe")), 3)
+
+    def test_it_combines_with_the_team_filter(self):
+        self.assertEqual(self.names(f"?our_team=true&team={self.other.id}"), [])
+        self.assertEqual(self.names(f"?our_team=true&team={self.ours.id}"), ["Ours1", "Ours2"])
+
+    def test_it_is_a_single_query(self):
+        with self.assertNumQueries(1):
+            self.client.get("/api/players/?our_team=true")
