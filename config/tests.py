@@ -5,14 +5,21 @@ from rest_framework.test import APITestCase
 
 
 class HealthTests(TestCase):
-    def test_reports_ok_when_the_database_answers(self):
-        response = self.client.get("/health/")
+    def test_liveness_answers_without_touching_the_database(self):
+        with mock.patch("config.views.connection.ensure_connection") as ensure_connection:
+            response = self.client.get("/health/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok"})
+        ensure_connection.assert_not_called()
+
+    def test_readiness_reports_ok_when_the_database_answers(self):
+        response = self.client.get("/health/db/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"status": "ok"})
 
-    def test_reports_503_when_the_database_is_down(self):
+    def test_readiness_reports_503_when_the_database_is_down(self):
         with mock.patch("config.views.connection.ensure_connection", side_effect=Exception):
-            response = self.client.get("/health/")
+            response = self.client.get("/health/db/")
         self.assertEqual(response.status_code, 503)
 
 
@@ -32,3 +39,14 @@ class ApiCacheHeaderTests(APITestCase):
     def test_health_and_admin_are_not_cached(self):
         self.assertNotIn("s-maxage", self.client.get("/health/").get("Cache-Control", ""))
         self.assertNotIn("s-maxage", self.client.get("/admin/").get("Cache-Control", ""))
+
+
+class ApiCompressionTests(APITestCase):
+    def test_large_api_responses_are_gzipped_when_the_client_accepts_it(self):
+        response = self.client.get("/api/schema/", HTTP_ACCEPT_ENCODING="gzip")
+        self.assertEqual(response["Content-Encoding"], "gzip")
+        self.assertIn("Accept-Encoding", response["Vary"])
+
+    def test_responses_stay_plain_without_accept_encoding(self):
+        response = self.client.get("/api/schema/")
+        self.assertNotIn("Content-Encoding", response)
