@@ -5,14 +5,21 @@ from rest_framework.test import APITestCase
 
 
 class HealthTests(TestCase):
-    def test_reports_ok_when_the_database_answers(self):
-        response = self.client.get("/health/")
+    def test_liveness_answers_without_touching_the_database(self):
+        with mock.patch("config.views.connection.ensure_connection") as ensure_connection:
+            response = self.client.get("/health/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok"})
+        ensure_connection.assert_not_called()
+
+    def test_readiness_reports_ok_when_the_database_answers(self):
+        response = self.client.get("/health/db/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"status": "ok"})
 
-    def test_reports_503_when_the_database_is_down(self):
+    def test_readiness_reports_503_when_the_database_is_down(self):
         with mock.patch("config.views.connection.ensure_connection", side_effect=Exception):
-            response = self.client.get("/health/")
+            response = self.client.get("/health/db/")
         self.assertEqual(response.status_code, 503)
 
 
