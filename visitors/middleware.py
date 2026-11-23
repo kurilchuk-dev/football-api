@@ -33,6 +33,7 @@ class VisitLogMiddleware:
             ip, _ = get_client_ip(request)
             Visit.objects.create(
                 ip=ip,
+                visitor_id=getattr(request, "visitor_id", ""),
                 path=request.path[:255],
                 method=request.method,
                 status_code=response.status_code,
