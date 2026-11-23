@@ -24,6 +24,11 @@
   {% endfor %}
 </div>
 
+<p class="stats-empty" style="max-width:980px;margin:-12px 0 24px">
+  «Відвідувачі» — це унікальні анонімні ID браузерів (їх сайт надсилає раз за сесію), а не IP: так людина зі змінною мережею
+  рахується один раз. Це браузери, а не люди: телефон і комп’ютер дадуть двох. Боти (за User-Agent) у цифрах не враховані.
+</p>
+
 <div class="stats-grid">
   <div class="stats-block">
     <h2>Країни</h2>
@@ -56,7 +61,7 @@
   <div class="stats-block">
     <h2>По днях (останні {{ days }})</h2>
     {% for row in per_day %}
-      <div class="stats-row"><i style="width:{{ row.percent }}%"></i><span>{{ row.label|date:"d.m.Y" }} · унікальних IP: {{ row.unique }}</span><strong>{{ row.total }}</strong></div>
+      <div class="stats-row"><i style="width:{{ row.percent }}%"></i><span>{{ row.label|date:"d.m.Y" }} · відвідувачів: {{ row.visitors }} · унікальних IP: {{ row.unique }}</span><strong>{{ row.total }}</strong></div>
     {% endfor %}
   </div>
 </div>

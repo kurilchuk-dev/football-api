@@ -9,7 +9,9 @@ from django.utils import timezone
 from unfold.admin import ModelAdmin
 from unfold.decorators import action
 
+from .bots import bot_visits, human_visits
 from .models import Visit
+from .views import PING_PATH
 
 DAYS = 30
 TOP = 10
@@ -38,6 +40,7 @@ class VisitAdmin(ModelAdmin):
     list_display = (
         "created_at",
         "ip",
+        "visitor_id",
         "country",
         "region",
         "city",
@@ -46,7 +49,7 @@ class VisitAdmin(ModelAdmin):
         "status_code",
     )
     list_filter = ("country", "status_code", "method")
-    search_fields = ("ip", "city", "path")
+    search_fields = ("ip", "visitor_id", "city", "path")
     date_hierarchy = "created_at"
     actions_list = ["stats_link"]
 
@@ -75,16 +78,39 @@ class VisitAdmin(ModelAdmin):
             return redirect("admin:index")
 
         now = timezone.now()
-        visits = Visit.objects.all()
+        everything = Visit.objects.exclude(path=PING_PATH)
+        # People only: the robots (by User-Agent) are left out of every number below.
+        visits = human_visits(everything)
+        # The site reports every browser session once, with an anonymous id of the browser.
+        pings = human_visits(Visit.objects.filter(path=PING_PATH)).exclude(visitor_id="")
+
+        def people(queryset):
+            return queryset.values("visitor_id").distinct().count()
+
         day_ago = visits.filter(created_at__gte=now - timedelta(days=1))
         week_ago = visits.filter(created_at__gte=now - timedelta(days=7))
         totals = [
+            (
+                "Відвідувачів за добу",
+                people(pings.filter(created_at__gte=now - timedelta(days=1))),
+            ),
+            (
+                "Відвідувачів за 7 днів",
+                people(pings.filter(created_at__gte=now - timedelta(days=7))),
+            ),
+            ("Відвідувачів усього", people(pings)),
             ("Запитів за добу", day_ago.count()),
             ("Унікальних IP за добу", day_ago.values("ip").distinct().count()),
             ("Запитів за 7 днів", week_ago.count()),
             ("Унікальних IP за 7 днів", week_ago.values("ip").distinct().count()),
             ("Запитів усього", visits.count()),
             ("Унікальних IP усього", visits.values("ip").distinct().count()),
+            (
+                "Запитів від ботів за добу",
+                bot_visits(Visit.objects.all())
+                .filter(created_at__gte=now - timedelta(days=1))
+                .count(),
+            ),
         ]
 
         # one row for every one of the last DAYS days, also the empty ones
@@ -98,12 +124,24 @@ class VisitAdmin(ModelAdmin):
             .values("day")
             .annotate(total=Count("id"), unique=Count("ip", distinct=True))
         }
+        people_per_day = {
+            row["day"]: row["total"]
+            for row in pings.filter(created_at__date__gte=since)
+            .annotate(day=TruncDate("created_at"))
+            .values("day")
+            .annotate(total=Count("visitor_id", distinct=True))
+        }
         per_day = []
         for offset in range(DAYS):
             day = since + timedelta(days=offset)
             row = counted.get(day, {})
             per_day.append(
-                {"label": day, "total": row.get("total", 0), "unique": row.get("unique", 0)}
+                {
+                    "label": day,
+                    "total": row.get("total", 0),
+                    "unique": row.get("unique", 0),
+                    "visitors": people_per_day.get(day, 0),
+                }
             )
         biggest = max((row["total"] for row in per_day), default=0)
         for row in per_day:

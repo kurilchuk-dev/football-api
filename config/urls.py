@@ -16,6 +16,7 @@ urlpatterns = [
     path("api/", include("matches.urls")),
     path("api/", include("standings.urls")),
     path("api/", include("players.urls")),
+    path("api/", include("visitors.urls")),
 ]
 
 if settings.DEBUG:
