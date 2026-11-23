@@ -6,6 +6,7 @@ class StandingTeamSerializer(serializers.Serializer):
     name = serializers.CharField()
     is_our_team = serializers.BooleanField()
     logo = serializers.ImageField(allow_null=True, read_only=True)
+    photo = serializers.ImageField(allow_null=True, read_only=True)
 
 
 class StandingRowSerializer(serializers.Serializer):

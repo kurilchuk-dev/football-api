@@ -41,6 +41,7 @@ def calculate_standings():
                 "name": team.name,
                 "is_our_team": team.is_our_team,
                 "logo": team.logo,
+                "photo": team.photo,
             },
             "played": 0,
             "won": 0,

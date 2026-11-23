@@ -16,7 +16,7 @@ class PlayerInline(TabularInline):
 
 @admin.register(Team)
 class TeamAdmin(ModelAdmin):
-    list_display = ("logo_preview", "name", "city", "is_our_team")
+    list_display = ("logo_preview", "name", "city", "is_our_team", "has_photo")
     list_display_links = ("logo_preview", "name")
     list_filter = ("is_our_team",)
     search_fields = ("name", "city")
@@ -29,3 +29,7 @@ class TeamAdmin(ModelAdmin):
         return format_html(
             '<img src="{}" alt="" style="height:32px;width:32px;object-fit:contain">', obj.logo.url
         )
+
+    @admin.display(description="фото команди", boolean=True)
+    def has_photo(self, obj):
+        return bool(obj.photo)
