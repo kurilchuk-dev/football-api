@@ -130,6 +130,27 @@ class StandingsApiLogoTests(APITestCase):
         self.assertIsNone(by_name[plain.name]["logo"])
         self.assertTrue(by_name["Logo"]["logo"].startswith("http://testserver/media/team_logos/"))
 
+    def test_photo_is_null_without_upload_and_url_with_upload(self):
+        import io
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from PIL import Image
+
+        plain = Team.objects.create(name="Plain")
+        with_photo = Team.objects.create(name="Photo")
+        buffer = io.BytesIO()
+        Image.new("RGB", (1, 1)).save(buffer, format="PNG")
+        upload = SimpleUploadedFile("team.png", buffer.getvalue())
+        with self.settings(MEDIA_ROOT=self._tmp()):
+            with_photo.photo.save("team.png", upload, save=True)
+            response = self.client.get("/api/standings/")
+        self.assertEqual(response.status_code, 200)
+        by_name = {r["team"]["name"]: r["team"] for r in response.json()}
+        self.assertIsNone(by_name[plain.name]["photo"])
+        self.assertTrue(
+            by_name["Photo"]["photo"].startswith("http://testserver/media/team_photos/")
+        )
+
     def _tmp(self):
         import tempfile
 

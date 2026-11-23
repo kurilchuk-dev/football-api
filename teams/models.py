@@ -8,6 +8,12 @@ class Team(models.Model):
     city = models.CharField("місто", max_length=100, blank=True)
     is_our_team = models.BooleanField("наша команда", default=False)
     logo = models.ImageField("логотип", upload_to="team_logos/", blank=True)
+    photo = models.ImageField(
+        "фото команди",
+        upload_to="team_photos/",
+        blank=True,
+        help_text="Загальне фото команди: відкривається на сайті, коли натиснути на команду.",
+    )
 
     class Meta:
         ordering = ["name"]
