@@ -74,7 +74,9 @@ MIDDLEWARE = [
 
 # The /api/ is public and read-only (no cookies, no credentials), so any site may read it. That also
 # keeps the CDN cache safe: the response does not depend on which site asked.
-CORS_URLS_REGEX = r"^/api/.*$"
+# /media/ (only served by Django in development; production images come from Cloudinary) is
+# public too, so the site can draw the team logos and photos on a canvas for the shared pictures.
+CORS_URLS_REGEX = r"^/(api|media)/.*$"
 CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL_ORIGINS", default=True)
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 # For example https://.*\.pages\.dev to also allow preview deployments of the frontend.

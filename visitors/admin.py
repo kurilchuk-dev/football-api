@@ -88,7 +88,9 @@ class VisitAdmin(ModelAdmin):
         ]
 
         # one row for every one of the last DAYS days, also the empty ones
-        since = (now - timedelta(days=DAYS - 1)).date()
+        # The visits are grouped by the local (Kyiv) day, so the days are counted in local time too:
+        # in UTC, between 00:00 and 03:00 in Kyiv "today" would be the previous day and be lost.
+        since = timezone.localtime(now).date() - timedelta(days=DAYS - 1)
         counted = {
             row["day"]: row
             for row in visits.filter(created_at__date__gte=since)
