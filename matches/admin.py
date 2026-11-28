@@ -11,6 +11,7 @@ from django.urls import path, reverse
 from unfold.admin import ModelAdmin
 from unfold.decorators import action
 
+from config.rebuild import schedule_rebuild
 from standings.services import calculate_standings
 
 from .models import Match
@@ -119,6 +120,8 @@ class MatchAdmin(ModelAdmin):
         "round",
         ("match_date", "match_time"),
         ("home_score", "away_score"),
+        "venue",
+        "report",
     )
     actions = ["shift_forward", "shift_back", "clear_date_time", "set_date_time", "export_csv"]
     actions_list = ["rounds_link", "export_calendar_link", "export_standings_link"]
@@ -199,6 +202,7 @@ class MatchAdmin(ModelAdmin):
     @admin.action(description="Очистити дату й час")
     def clear_date_time(self, request, queryset):
         count = queryset.update(match_date=None, match_time=None)
+        schedule_rebuild()  # update() sends no signals
         self.message_user(request, f"Дату й час очищено: {count}.", messages.SUCCESS)
 
     @admin.action(description="Встановити дату й час…")
@@ -228,6 +232,7 @@ class MatchAdmin(ModelAdmin):
                         )
                     queryset = matches
                 count = queryset.update(**changes)
+                schedule_rebuild()  # update() sends no signals
                 self.message_user(request, f"Оновлено матчів: {count}.", messages.SUCCESS)
                 return None
         else:

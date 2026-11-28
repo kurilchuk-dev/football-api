@@ -37,6 +37,8 @@ services:
         sync: false
       - key: CSRF_TRUSTED_ORIGINS # https://<service>.onrender.com
         sync: false
+      - key: SITE_DEPLOY_HOOK_URL # Cloudflare Pages deploy hook of the site
+        sync: false
       - key: MAXMIND_ACCOUNT_ID # GeoLite2 download, see README
         sync: false
       - key: MAXMIND_LICENSE_KEY

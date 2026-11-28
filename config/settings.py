@@ -69,6 +69,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "config.cache.PublicApiCacheMiddleware",
+    "config.noindex.NoIndexMiddleware",
     "visitors.middleware.VisitLogMiddleware",
 ]
 
@@ -207,6 +208,10 @@ UNFOLD = {
 # After signing in the admin theme sends people to "/accounts/profile/" unless told otherwise.
 LOGIN_REDIRECT_URL = "/admin/"
 
+
+# The site's pages are built from the data: after an edit its hosting is asked for a new build.
+SITE_DEPLOY_HOOK_URL = env("SITE_DEPLOY_HOOK_URL", default="")
+SITE_DEPLOY_DELAY_SECONDS = env.int("SITE_DEPLOY_DELAY_SECONDS", default=180)
 
 # Visitor log: IP + approximate location (MaxMind GeoLite2-City, see `manage.py update_geoip`).
 VISIT_LOG_ENABLED = env.bool("VISIT_LOG_ENABLED", default=True)

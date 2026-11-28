@@ -36,7 +36,7 @@ paths:
           name: id
           schema:
             type: integer
-          description: A unique integer value identifying this match.
+          description: A unique integer value identifying this матч.
           required: true
       tags:
         - matches
@@ -107,7 +107,8 @@ paths:
           name: our_team
           schema:
             type: boolean
-          description: 'true: show only players of our team (the one marked as ours), no id needed'
+          description: 'true: show only players of our team (the one marked as ours),
+            no id needed'
         - in: query
           name: team
           schema:
@@ -136,7 +137,7 @@ paths:
           name: id
           schema:
             type: integer
-          description: A unique integer value identifying this player.
+          description: A unique integer value identifying this гравець.
           required: true
       tags:
         - players
@@ -177,7 +178,7 @@ paths:
           name: id
           schema:
             type: integer
-          description: A unique integer value identifying this staff member.
+          description: A unique integer value identifying this тренерський штаб.
           required: true
       tags:
         - staff
@@ -236,7 +237,7 @@ paths:
           name: id
           schema:
             type: integer
-          description: A unique integer value identifying this team.
+          description: A unique integer value identifying this команда.
           required: true
       tags:
         - teams
@@ -283,27 +284,55 @@ components:
           minimum: 0
           format: int64
           nullable: true
+          title: Голи господарів
         away_score:
           type: integer
           maximum: 9223372036854775807
           minimum: 0
           format: int64
           nullable: true
+          title: Голи гостей
+        date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        time:
+          type: string
+          format: time
+          readOnly: true
+          nullable: true
         played_at:
           type: string
           format: date-time
+          readOnly: true
+          nullable: true
         round:
           type: integer
           maximum: 9223372036854775807
           minimum: 0
           format: int64
           nullable: true
-          description: Round (matchday) number, e.g. 5 for round 5.
+          title: Тур
+          description: Номер туру, наприклад 5.
+        venue:
+          type: string
+          title: Місце
+          description: Де грають, наприклад назва зали та місто. Показується на сторінці
+            матчу.
+          maxLength: 150
+        report:
+          type: string
+          title: Звіт про матч
+          description: Кілька абзаців про гру. Вони з'являться на сторінці матчу й
+            у пошуку.
       required:
         - away_team
+        - date
         - home_team
         - id
         - played_at
+        - time
     Player:
       type: object
       properties:
@@ -312,9 +341,11 @@ components:
           readOnly: true
         first_name:
           type: string
+          title: Ім'я
           maxLength: 50
         last_name:
           type: string
+          title: Прізвище
           maxLength: 50
         number:
           type: integer
@@ -322,12 +353,14 @@ components:
           minimum: 0
           format: int64
           nullable: true
-          description: Shirt number; leave empty if not assigned yet.
+          title: Номер
+          description: Номер на футболці; залиште порожнім, якщо ще не призначено.
         photo:
           type: string
           format: uri
           nullable: true
-          description: Portrait shown on the team page.
+          title: Фото
+          description: Портрет для сторінки команди.
       required:
         - first_name
         - id
@@ -339,9 +372,9 @@ components:
         - manager
       type: string
       description: |-
-        * `head_coach` - Head coach
-        * `assistant` - Assistant coach
-        * `manager` - Team manager
+        * `head_coach` - Головний тренер
+        * `assistant` - Помічник тренера
+        * `manager` - Менеджер команди
     StaffMember:
       type: object
       properties:
@@ -350,12 +383,16 @@ components:
           readOnly: true
         first_name:
           type: string
+          title: Ім'я
           maxLength: 50
         last_name:
           type: string
+          title: Прізвище
           maxLength: 50
         role:
-          $ref: '#/components/schemas/RoleEnum'
+          allOf:
+            - $ref: '#/components/schemas/RoleEnum'
+          title: Посада
         role_display:
           type: string
           readOnly: true
@@ -438,20 +475,27 @@ components:
           readOnly: true
         name:
           type: string
+          title: Назва
           maxLength: 100
         city:
           type: string
+          title: Місто
           maxLength: 100
         is_our_team:
           type: boolean
+          title: Наша команда
         logo:
           type: string
           format: uri
           nullable: true
+          title: Логотип
         photo:
           type: string
           format: uri
           nullable: true
+          title: Фото команди
+          description: 'Загальне фото команди: відкривається на сайті, коли натиснути
+            на команду.'
       required:
         - id
         - name

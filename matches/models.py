@@ -31,6 +31,18 @@ class Match(models.Model):
         "тур", null=True, blank=True, help_text="Номер туру, наприклад 5."
     )
 
+    venue = models.CharField(
+        "місце",
+        max_length=150,
+        blank=True,
+        help_text="Де грають, наприклад назва зали та місто. Показується на сторінці матчу.",
+    )
+    report = models.TextField(
+        "звіт про матч",
+        blank=True,
+        help_text="Кілька абзаців про гру. Вони з'являться на сторінці матчу й у пошуку.",
+    )
+
     class Meta:
         # Newest first; matches without a date (or time) go last, on every database.
         verbose_name = "матч"
