@@ -1,9 +1,13 @@
 import json
 import re
 
+from django.conf import settings
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from ipware import get_client_ip
+
+from .limits import allow
 
 # The site reports itself here once per browser session; see visitors/middleware.py.
 PING_PATH = "/api/visitors/ping/"
@@ -21,7 +25,12 @@ def ping(request):
 
     The id is random and stored only in the visitor's browser: it says nothing about who the
     person is. The middleware writes it to the visit log together with the other fields.
+    Too many pings in an hour are answered with 429 and are not written to the log.
     """
+    ip, _ = get_client_ip(request)
+    if not allow("ping", ip, settings.VISIT_PING_LIMIT_PER_IP, settings.VISIT_PING_LIMIT_TOTAL):
+        request.skip_visit_log = True
+        return HttpResponse(status=429)
     try:
         if len(request.body) > MAX_BODY:
             return HttpResponseBadRequest("too big")

@@ -211,6 +211,11 @@ LOGIN_REDIRECT_URL = "/admin/"
 # Visitor log: IP + approximate location (MaxMind GeoLite2-City, see `manage.py update_geoip`).
 VISIT_LOG_ENABLED = env.bool("VISIT_LOG_ENABLED", default=True)
 VISIT_LOG_RETENTION_DAYS = env.int("VISIT_LOG_RETENTION_DAYS", default=90)
+# Hourly limits against floods (see visitors/limits.py); 0 switches a limit off.
+VISIT_PING_LIMIT_PER_IP = env.int("VISIT_PING_LIMIT_PER_IP", default=30)
+VISIT_PING_LIMIT_TOTAL = env.int("VISIT_PING_LIMIT_TOTAL", default=600)
+VISIT_LOG_LIMIT_PER_IP = env.int("VISIT_LOG_LIMIT_PER_IP", default=600)
+VISIT_LOG_LIMIT_TOTAL = env.int("VISIT_LOG_LIMIT_TOTAL", default=5000)
 GEOIP_DB_PATH = Path(env("GEOIP_DB_PATH", default=str(BASE_DIR / "geoip" / "GeoLite2-City.mmdb")))
 MAXMIND_ACCOUNT_ID = env("MAXMIND_ACCOUNT_ID", default="")
 MAXMIND_LICENSE_KEY = env("MAXMIND_LICENSE_KEY", default="")
