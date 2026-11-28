@@ -107,6 +107,58 @@ class PingTests(TestCase):
         self.assertEqual(Visit.objects.get().visitor_id, "")
 
 
+class FloodLimitTests(TestCase):
+    def setUp(self):
+        self.enterContext(
+            override_settings(
+                VISIT_LOG_ENABLED=True,
+                VISIT_PING_LIMIT_PER_IP=2,
+                VISIT_PING_LIMIT_TOTAL=3,
+                VISIT_LOG_LIMIT_PER_IP=2,
+                VISIT_LOG_LIMIT_TOTAL=3,
+            )
+        )
+
+    def ping(self, ip):
+        return self.client.post(
+            "/api/visitors/ping/",
+            {"visitor_id": GOOD_ID},
+            content_type="application/json",
+            REMOTE_ADDR=ip,
+        ).status_code
+
+    def get(self, ip):
+        return self.client.get("/api/matches/", REMOTE_ADDR=ip).status_code
+
+    def test_too_many_pings_of_one_address_are_refused_and_not_saved(self):
+        self.assertEqual([self.ping("8.8.8.8") for _ in range(4)], [204, 204, 429, 429])
+        self.assertEqual(Visit.objects.count(), 2)
+        # the refused ones did not use up the total, so another address still gets through
+        self.assertEqual(self.ping("8.8.4.4"), 204)
+
+    def test_pings_have_a_total_limit_whatever_the_address(self):
+        answers = [self.ping(f"8.8.8.{n}") for n in range(1, 6)]
+        self.assertEqual(answers, [204, 204, 204, 429, 429])
+        self.assertEqual(Visit.objects.count(), 3)
+
+    def test_a_flood_of_requests_is_answered_but_no_longer_saved(self):
+        self.assertEqual([self.get("8.8.8.8") for _ in range(4)], [200] * 4)
+        self.assertEqual(Visit.objects.count(), 2)
+        self.get("8.8.4.4")
+        self.get("1.1.1.1")
+        self.assertEqual(Visit.objects.count(), 3)
+
+    def test_a_ping_is_saved_even_when_the_request_limit_is_used_up(self):
+        for _ in range(3):
+            self.get("8.8.8.8")
+        self.assertEqual(self.ping("8.8.8.8"), 204)
+        self.assertEqual(Visit.objects.filter(visitor_id=GOOD_ID).count(), 1)
+
+    @override_settings(VISIT_PING_LIMIT_PER_IP=0, VISIT_PING_LIMIT_TOTAL=0)
+    def test_zero_switches_a_limit_off(self):
+        self.assertEqual([self.ping("8.8.8.8") for _ in range(5)], [204] * 5)
+
+
 class BotFilterTests(TestCase):
     def test_robots_are_told_from_browsers_by_the_user_agent(self):
         robots = [

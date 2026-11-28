@@ -1,4 +1,11 @@
 import pytest
+from django.core.cache import cache
+
+
+@pytest.fixture(autouse=True)
+def _fresh_cache():
+    """The flood limits of the visitor log count in the cache; every test starts from zero."""
+    cache.clear()
 
 
 @pytest.fixture(autouse=True)
