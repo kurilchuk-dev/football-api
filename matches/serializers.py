@@ -28,4 +28,6 @@ class MatchSerializer(serializers.ModelSerializer):
             "time",
             "played_at",
             "round",
+            "venue",
+            "report",
         ]
