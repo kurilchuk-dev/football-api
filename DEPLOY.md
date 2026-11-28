@@ -75,6 +75,18 @@ GitHub (main) ─┬─► Cloudflare Pages ── сайт (football-web)
 
 ---
 
+## 4.1. SEO: готові сторінки та перезбірка
+
+- Коли на Cloudflare Pages задані `VITE_SITE_URL` і `VITE_API_URL`, збірка створює окремий HTML
+  для кожної сторінки, матчу й команди, а також `sitemap.xml` і `404.html`. Якщо API недоступний,
+  збірка падає, і на сайті лишається попередня версія. Вимкнути: `PRERENDER=off`.
+- Щоб нові рахунки потрапляли й у ці сторінки: Cloudflare Pages → Settings → **Deploy hooks** →
+  створіть хук для гілки `main` і впишіть його адресу в `SITE_DEPLOY_HOOK_URL` на Render. Це секрет.
+- Порядок релізу: спершу API (`football-api`), потім сайт.
+- Search Console: додайте сайт і подайте `<адреса>/sitemap.xml`.
+
+---
+
 ## 5. Перший запуск: дані
 
 Прод-база порожня. Два способи:
